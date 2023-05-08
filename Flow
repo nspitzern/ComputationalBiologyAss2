@@ -1,0 +1,10 @@
+1. Parse files
+2. Generate initial samples
+3. While not converge:
+    a. Check fitness
+        *) If converge condition is good - stop
+    b. Select elite for next gen
+    c. Generate more samples
+        c.1. Do mutations
+        c.2. Do crossovers
+4. Print and save results
