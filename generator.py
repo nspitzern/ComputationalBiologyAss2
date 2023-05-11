@@ -21,9 +21,7 @@ class Sample:
         self.dec_map[c1], self.dec_map[c2] = self.dec_map[c2], self.dec_map[c1]
 
     def __eq__(self, other):
-        if self.shuffled_letters == other.shuffled_letters:
-            return True
-        return False
+        return self.shuffled_letters == other.shuffled_letters
 
 
 class Generator:
