@@ -20,12 +20,11 @@ def parse_letters_freq(file_path: str) -> Dict[str, float]:
 def parse_encoded(file_path: str) -> Tuple[List[str], List[str]]:
     letters_enc = []
     words_enc = []
-    # original_enc = []
 
     with open(file_path, 'r', encoding='utf-8') as f:
         for line in f.readlines():
+
             if line in whitespace:
-                # original_enc.append(line)
                 continue
 
             words = line.lower().split(' ')
