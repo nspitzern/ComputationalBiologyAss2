@@ -8,10 +8,8 @@ class Decoder:
 
     @staticmethod
     def decode_words(enc_words: List[str], dec_map: Dict[str, str]) -> List[str]:
-        decoded_words = []
-
-        for word in enc_words:
-            decoded_word = ''.join([dec_map[c] for c in word])
-            decoded_words.append(decoded_word)
-
-        return decoded_words
+        return [''.join([dec_map[c] for c in word]) for word in enc_words]
+    
+    # @staticmethod
+    # def decode_words(enc_words: List[str], dec_map: Dict[str, str]) -> List[str]:
+    #     return [''.join((map(lambda c: dec_map[c], w))) for w in enc_words]
