@@ -1,6 +1,6 @@
 import unittest
 
-from fitness import check_words_in_dict_ratio
+from src.fitness import check_words_in_dict_ratio, letters_freq_ratio, MSE
 
 
 class TestFitness(unittest.TestCase):
@@ -24,6 +24,18 @@ class TestFitness(unittest.TestCase):
 
         res = check_words_in_dict_ratio(dec, d)
         assert res == 0
+
+    def test_MSE_not_0(self):
+        d_f = {'a': 0.3, 'b': 0.01}
+        c_f = {'a': 0.2, 'b': 0.4}
+
+        assert letters_freq_ratio(d_f, c_f, MSE) != 0
+
+    def test_MSE_0(self):
+        d_f = {'a': 0.2, 'b': 0.4}
+        c_f = {'a': 0.2, 'b': 0.4}
+
+        assert letters_freq_ratio(d_f, c_f, MSE) == 0
 
 
 if __name__ == '__main__':

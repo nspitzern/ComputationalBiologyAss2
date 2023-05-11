@@ -18,7 +18,7 @@ def check_words_in_dict_ratio(dec: List[str], corpus: List[str]) -> float:
 
 
 def letters_freq_ratio(dec_letters_freq: Dict[str, float], corpus_letters_freq, measurement_func: Callable) -> float:
-    freqs = [(dec_letters_freq[c], corpus_letters_freq[c]) for c in corpus_letters_freq.key()]
+    freqs = [(dec_letters_freq[c], corpus_letters_freq[c]) for c in corpus_letters_freq.keys()]
 
     return measurement_func(freqs)
 
