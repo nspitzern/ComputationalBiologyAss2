@@ -1,15 +1,20 @@
-from typing import List
+from typing import Dict, List
 from random import shuffle
 
 
 class Sample:
     def __init__(self, letters: List[str]):
-        self.__decode_letters = list(letters[:])
-        shuffle(self.__decode_letters)
+        decode_letters = list(letters[:])
+        shuffle(decode_letters)
+        self.__dec_map: Dict[str, str] = {letters[i]: decode_letters[i] for i in range(len(letters))}
+    
+    @property
+    def dec_map(self):
+        return self.__dec_map
 
     @property
     def decode_letters(self) -> List[str]:
-        return self.__decode_letters
-
-    def swap(self, i: int, j: int):
-        self.__decode_letters[i], self.__decode_letters[j] = self.__decode_letters[j], self.__decode_letters[i]
+        return list(self.__dec_map.values())
+    
+    def swap(self, c1: str, c2: str):
+        self.__dec_map[c1], self.__dec_map[c2] = self.__dec_map[c2], self.__dec_map[c1]
