@@ -41,7 +41,9 @@ class Simulator:
             # Calculate fitness score for each decode
             fitness_scores = [check_words_in_dict_ratio(dec, self.dictionary) for dec in dec_words]
 
+            print(f'{max(fitness_scores)}%')
             self.__count_fitness_calls += len(dec_words)
+            print(f'fitness calls: {self.__count_fitness_calls}')
             should_run = all(fitness_score < self.__fitness_goal for fitness_score in fitness_scores)
 
             elite_samples = self.__selector.select_elite(self.__samples, fitness_scores, self.__fitness_goal)
