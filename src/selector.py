@@ -4,10 +4,8 @@ from src.generator import Sample
 
 
 class Selector:
-    def __init__(self):
-        pass
-
-    def select_elite(self, samples, fitness_scores, percentile: float) -> List[Sample]:
+    @staticmethod
+    def select_elite(samples, fitness_scores, percentile: float) -> List[Sample]:
         """
 
         :param samples:

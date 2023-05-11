@@ -1,3 +1,4 @@
+import statistics
 from string import punctuation
 from typing import Dict, List, Set
 from src.files_parser import parse_dict, parse_encoded, parse_letters_freq
@@ -19,7 +20,6 @@ class Simulator:
         self.__memory: Memory = Memory()
         self.__fitness_goal: float = fitness_goal
         self.__generator: Generator = Generator(self.__letters)
-        self.__selector: Selector = Selector()
         self.__samples: List[Sample] = self.__generator.generate_random(num_samples)
 
         self.__count_fitness_calls = 0
@@ -41,9 +41,9 @@ class Simulator:
             # Calculate fitness score for each decode
             fitness_scores = [check_words_in_dict_ratio(dec, self.dictionary) for dec in dec_words]
 
-            print(f'{max(fitness_scores)}%')
+            print(f'Best: {max(fitness_scores)}%, Worst: {min(fitness_scores)}%, Mean: {statistics.mean(fitness_scores)}%')
             self.__count_fitness_calls += len(dec_words)
             print(f'fitness calls: {self.__count_fitness_calls}')
             should_run = all(fitness_score < self.__fitness_goal for fitness_score in fitness_scores)
 
-            elite_samples = self.__selector.select_elite(self.__samples, fitness_scores, self.__fitness_goal)
+            elite_samples = Selector.select_elite(self.__samples, fitness_scores, self.__fitness_goal)
