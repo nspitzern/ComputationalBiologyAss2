@@ -8,7 +8,13 @@ class Selector:
         pass
 
     def select_elite(self, samples, fitness_scores, percentile: float) -> List[Sample]:
-        selected_samples = []
+        """
+
+        :param samples:
+        :param fitness_scores:
+        :param percentile: Which percentile to keep
+        :return:
+        """
         ratio = floor(len(fitness_scores) - percentile * len(fitness_scores))  # how many samples to return
 
         # sort the
