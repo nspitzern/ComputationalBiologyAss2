@@ -1,11 +1,11 @@
 from pprint import pprint
 from typing import List
 
-from files_parser import parse_encoded, parse_dict, parse_letters_freq
-from generator import Generator, Sample
-from decoder import Decoder
-from fitness import check_words_in_dict_ratio
-from selector import Selector
+from src.files_parser import parse_encoded, parse_dict, parse_letters_freq
+from src.generator import Generator, Sample
+from src.decoder import Decoder
+from src.fitness import check_words_in_dict_ratio
+from src.selector import Selector
 
 
 if __name__ == '__main__':
