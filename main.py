@@ -31,7 +31,7 @@ if __name__ == '__main__':
         elite_samples = selector.select_elite(samples, fitness_scores, 0.95)
 
         for s in samples:
-            s = g.generate_mutation(s)
+            g.generate_mutation(s)
 
         # Decode the encrypted file
         decs_words = [Decoder.decode_words(enc_words, s.dec_map) for s in samples]
