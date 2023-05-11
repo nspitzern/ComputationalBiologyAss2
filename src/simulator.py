@@ -25,7 +25,7 @@ class Simulator:
         decs_words = [Decoder.decode_words(self.enc_words, s.dec_map) for s in self.__samples]
         fitness_scores = [check_words_in_dict_ratio(dec, self.dictionary) for dec in decs_words]
         
-        while all(fitness_scores) < self.__fitness_goal:
+        while all(fitness_score < self.__fitness_goal for fitness_score in fitness_scores):
             print(f'{max(fitness_scores)}%')
 
             elite_samples = self.__selector.select_elite(self.__samples, fitness_scores, self.__fitness_goal)
