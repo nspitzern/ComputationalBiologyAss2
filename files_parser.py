@@ -23,20 +23,18 @@ def parse_encoded(file_path: str) -> Tuple[List[str], List[str]]:
 
     with open(file_path, 'r', encoding='utf-8') as f:
         for line in f.readlines():
+            # Remove trailing and punctuations
+            line = line.strip().translate(str.maketrans('', '', punctuation))
 
-            if line in whitespace:
+            if line in whitespace or line == '':
                 continue
 
             words = line.lower().split(' ')
 
             for word in words:
-                word = word.translate(str.maketrans('', '', punctuation))
-                word = word.strip()
                 words_enc.append(word)
 
                 for l in word:
-                    if l in punctuation:
-                        continue
                     letters_enc.append(l)
 
     return words_enc, letters_enc
