@@ -1,20 +1,21 @@
-from typing import List, Dict, Callable, Tuple
+from typing import List, Dict, Callable, Set, Tuple
 
 
-def check_words_in_dict_ratio(dec: List[str], corpus: List[str]) -> float:
+def check_words_in_dict_ratio(dec: List[str], corpus: Set[str]) -> float:
     """
     Check the ratio of decoded words that appear in the corpus
     :param dec: List of decoded words
     :param corpus: List of Corpus words
     :return: float: ratio
     """
-    dec = set(dec)
-    corpus = set(corpus)
-
     n_words_dec = len(dec)
-    n_words_intersection = len(corpus & dec)
 
-    return 100 * (n_words_intersection / n_words_dec)
+    count = 0
+    for w in dec:
+        if w in corpus:
+            count += 1
+
+    return 100 * count / n_words_dec
 
 
 def letters_freq_ratio(dec_letters_freq: Dict[str, float], corpus_letters_freq, measurement_func: Callable) -> float:
