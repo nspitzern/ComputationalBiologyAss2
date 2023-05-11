@@ -1,3 +1,4 @@
+import os
 from typing import List, Dict, Tuple
 from string import punctuation, whitespace
 
@@ -16,25 +17,6 @@ def parse_letters_freq(file_path: str) -> Dict[str, float]:
 
     return d
 
-
-def parse_encoded(file_path: str) -> Tuple[List[str], List[str]]:
-    letters_enc = []
-    words_enc = []
-
+def parse_encoded(file_path: str) -> str:
     with open(file_path, 'r', encoding='utf-8') as f:
-        for line in f.readlines():
-            # Remove trailing and punctuations
-            line = line.strip().translate(str.maketrans('', '', punctuation))
-
-            if line in whitespace or line == '':
-                continue
-
-            words = line.lower().split(' ')
-
-            for word in words:
-                words_enc.append(word)
-
-                for l in word:
-                    letters_enc.append(l)
-
-    return words_enc, letters_enc
+        return os.linesep.join(f.readlines()).lower()

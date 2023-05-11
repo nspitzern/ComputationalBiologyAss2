@@ -17,7 +17,7 @@ class Generator:
 
         return g
 
-    def generate_mutation(self, dec_map: Dict[str, str]) -> Tuple[str, int, int]:
+    def generate_mutation(self, dec_map: Dict[str, str]) -> Tuple[str, str, str]:
         keys = list(dec_map.keys())
         values = list(dec_map.values())
 
