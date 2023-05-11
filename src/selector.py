@@ -1,6 +1,6 @@
 from typing import List
 from math import floor
-from generator import Sample
+from src.generator import Sample
 
 
 class Selector:
