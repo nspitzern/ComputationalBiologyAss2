@@ -15,7 +15,7 @@ def check_words_in_dict_ratio(dec: List[str], corpus: Set[str]) -> float:
         if w in corpus:
             count += 1
 
-    return 100 * count / n_words_dec
+    return count / n_words_dec
 
 
 def letters_freq_ratio(dec_letters_freq: Dict[str, float], corpus_letters_freq, measurement_func: Callable) -> float:
