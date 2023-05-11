@@ -28,7 +28,7 @@ if __name__ == '__main__':
     while all(fitness_scores) < 95:
         print(f'{max(fitness_scores)}%')
 
-        samples = selector.select_elite(samples, fitness_scores, 0.95)
+        elite_samples = selector.select_elite(samples, fitness_scores, 0.95)
 
         for s in samples:
             s = g.generate_mutation(s)
