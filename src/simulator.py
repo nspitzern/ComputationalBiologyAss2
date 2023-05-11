@@ -21,23 +21,27 @@ class Simulator:
         self.__selector: Selector = Selector()
         self.__samples: List[Sample] = self.__generator.generate_random(num_samples)
 
+        self.__count_fintess_calls = 0
+
     def run(self):
-        decs_words = [Decoder.decode_words(self.enc_words, s.dec_map) for s in self.__samples]
-        fitness_scores = [check_words_in_dict_ratio(dec, self.dictionary) for dec in decs_words]
+        should_run = True
         
-        while all(fitness_score < self.__fitness_goal for fitness_score in fitness_scores):
-            print(f'{max(fitness_scores)}%')
-
-            elite_samples = self.__selector.select_elite(self.__samples, fitness_scores, self.__fitness_goal)
-
-            for s in self.__samples:
-                mutation, c1, c2 = self.__generator.generate_mutation(s.dec_map)
+        while should_run:
+            for sample in self.__samples:
+                mutation, c1, c2 = self.__generator.generate_mutation(sample.dec_map)
                 while mutation in self.__memory.records:
-                    mutation: str = self.__generator.generate_mutation(s.dec_map)
+                    mutation: str = self.__generator.generate_mutation(sample.dec_map)
                 self.__memory.add(mutation)
-                s.swap(c1, c2)
+                sample.swap(c1, c2)
 
             # Decode the encrypted file
             decs_words = [Decoder.decode_words(self.enc_words, s.dec_map) for s in self.__samples]
             # Calculate fitness score for each decode
             fitness_scores = [check_words_in_dict_ratio(dec, self.dictionary) for dec in decs_words]
+
+            print(f'{max(fitness_scores)}%')
+            self.__count_fintess_calls += len(decs_words)
+            print(f'fitness calls: {self.__count_fintess_calls}')
+            should_run = all(fitness_score < self.__fitness_goal for fitness_score in fitness_scores)
+
+            elite_samples = self.__selector.select_elite(self.__samples, fitness_scores, self.__fitness_goal)
