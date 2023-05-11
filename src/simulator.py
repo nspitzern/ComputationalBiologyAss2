@@ -30,7 +30,7 @@ class Simulator:
         while should_run:
             for s in self.__samples:
                 mutation, c1, c2 = self.__generator.generate_mutation(s.dec_map)
-                while mutation in self.__memory.records:
+                while mutation in self.__memory:
                     mutation, c1, c2 = self.__generator.generate_mutation(s.dec_map)
                 self.__memory.add(mutation)
                 s.swap(c1, c2)
