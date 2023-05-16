@@ -1,7 +1,6 @@
 from typing import Dict, List, Tuple
-from random import sample, randint
-from src.generator import is_valid
-from src.sample import Sample
+from random import randint
+from src.memory import Memory
 from src.selector import Selector
 
 
@@ -35,10 +34,14 @@ class Evolver:
         cross_2 += s1[i:]
         
         return cross_1, cross_2
-    
-    def generate_valid_crossover(self, s1: str, s2: str) -> Tuple[str, str]:
-        cross_1, cross_2 = self.crossover(s1, s2)
-        while not is_valid(list(cross_1)) and not is_valid(list(cross_2)):
-            cross_1, cross_2 = self.crossover(s1, s2)
+
+    def generate_valid_crossover(self, samples: List[str], memory: Memory) -> Tuple[str, str]:
+        # Choose 2 samples for crossover
+        i, j = Selector.choose_2_random(samples)
+        co1, co2 = self.crossover(''.join(samples[i].decode_letters), ''.join(samples[j].decode_letters))
+
+        while co1 in memory or co2 in memory:
+            i, j = Selector.choose_2_random(samples)
+            co1, co2 = self.crossover(''.join(samples[i].decode_letters), ''.join(samples[j].decode_letters))
         
-        return cross_1, cross_2
+        return co1, co2
