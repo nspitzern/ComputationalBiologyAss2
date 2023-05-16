@@ -21,7 +21,7 @@ class Sample:
     def decode_letters(self) -> List[str]:
         return list(self.__dec_map.values())
     
-    def swap(self, c1: int, c2: int):
+    def swap(self, c1: str, c2: str):
         self.__dec_map[c1], self.__dec_map[c2] = self.__dec_map[c2], self.__dec_map[c1]
         
         i, j = ord(c1), ord(c2)

@@ -13,7 +13,7 @@ from src.fitness import check_words_in_dict_ratio
 
 
 class Simulator:
-    def __init__(self, num_samples: int, fitness_goal: int) -> None:
+    def __init__(self, num_samples: int, fitness_goal: float) -> None:
         self.enc = parse_encoded('enc.txt')
         self.dictionary: Set[str] = set(parse_dict('dict.txt'))
         freq_1_letter: Dict[str, float] = parse_letters_freq('Letter_Freq.txt')
@@ -32,9 +32,9 @@ class Simulator:
         
         while should_run:
             for s in self.__samples:
-                mutation, c1, c2 = self.__evolver.generate_mutation(s.dec_map)
+                mutation, c1, c2 = self.__evolver.mutate(s.dec_map)
                 while mutation in self.__memory:
-                    mutation, c1, c2 = self.__evolver.generate_mutation(s.dec_map)
+                    mutation, c1, c2 = self.__evolver.mutate(s.dec_map)
                 self.__memory.add(mutation)
                 s.swap(c1, c2)
 
@@ -44,7 +44,7 @@ class Simulator:
             # Calculate fitness score for each decode
             fitness_scores = [check_words_in_dict_ratio(dec, self.dictionary) for dec in dec_words]
 
-            print(f'Best: {max(fitness_scores)}%, Worst: {min(fitness_scores)}%, Mean: {statistics.mean(fitness_scores)}%')
+            print(f'Best: {max(fitness_scores) * 100}%, Worst: {min(fitness_scores) * 100}%, Mean: {statistics.mean(fitness_scores) * 100}%')
             self.__count_fitness_calls += len(dec_words)
             print(f'fitness calls: {self.__count_fitness_calls}')
             should_run = all(fitness_score < self.__fitness_goal for fitness_score in fitness_scores)
