@@ -3,9 +3,10 @@ from random import shuffle
 
 
 class Sample:
-    def __init__(self, letters: List[str]):
+    def __init__(self, letters: List[str], should_shuffle: bool = True):
         decode_letters = list(letters[:])
-        shuffle(decode_letters)
+        if should_shuffle:
+            shuffle(decode_letters)
         self.__dec_map: Dict[str, str] = {letters[i]: decode_letters[i] for i in range(len(letters))}
         self.__dec_map_int: Dict[int, int] = {ord(letters[i]): ord(decode_letters[i]) for i in range(len(letters))}
     
