@@ -20,8 +20,7 @@ class Simulator:
         freq_2_letter: Dict[str, float] = parse_letters_freq('Letter2_Freq.txt')
 
         self.__letters = list(sorted(freq_1_letter.keys()))
-        self.__mutations_memory: Memory = Memory()
-        self.__crossovers_memory: Memory = Memory()
+        self.__memory: Memory = Memory()
         self.__fitness_goal: float = fitness_goal
         self.__evolver: Evolver = Evolver(self.__letters)
         self.__samples: List[Sample] = generate_random(self.__letters, num_samples)
@@ -35,9 +34,9 @@ class Simulator:
         while should_run:
             for s in self.__samples:
                 mutation, c1, c2 = self.__evolver.mutate(s.dec_map)
-                while mutation in self.__mutations_memory:
+                while mutation in self.__memory:
                     mutation, c1, c2 = self.__evolver.mutate(s.dec_map)
-                self.__mutations_memory.add(mutation)
+                self.__memory.add(mutation)
                 s.swap(c1, c2)
 
             # Decode the encrypted file
@@ -60,12 +59,12 @@ class Simulator:
                 co1, co2 = self.__evolver.generate_valid_crossover(''.join(elite_samples[i].decode_letters),
                                                                    ''.join(elite_samples[j].decode_letters))
 
-                while co1 in self.__crossovers_memory or co2 in self.__crossovers_memory:
+                while co1 in self.__memory or co2 in self.__memory:
                     i, j = Selector.choose_2_random(elite_samples)
                     co1, co2 = self.__evolver.generate_valid_crossover(''.join(elite_samples[i].decode_letters),
                                                                        ''.join(elite_samples[j].decode_letters))
-                self.__crossovers_memory.add(co1)
-                self.__crossovers_memory.add(co2)
+                self.__memory.add(co1)
+                self.__memory.add(co2)
 
                 new_samples.append(Sample(list(co1), should_shuffle=False))
                 new_samples.append(Sample(list(co2), should_shuffle=False))
