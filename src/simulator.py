@@ -64,8 +64,8 @@ class Simulator:
                     i, j = Selector.choose_2_random(elite_samples)
                     co1, co2 = self.__evolver.generate_valid_crossover(''.join(elite_samples[i].decode_letters),
                                                                        ''.join(elite_samples[j].decode_letters))
-                self.__mutations_memory.add(co1)
-                self.__mutations_memory.add(co2)
+                self.__crossovers_memory.add(co1)
+                self.__crossovers_memory.add(co2)
 
                 new_samples.append(Sample(list(co1), should_shuffle=False))
                 new_samples.append(Sample(list(co2), should_shuffle=False))
