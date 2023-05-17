@@ -81,9 +81,12 @@ class Simulator:
         round_worst = []
         round_average = []
         round_best = []
-        mutation_amount = int(len(self.__samples) * 0.2)
 
-        plt.title('Sample progress')
+        mutation_percentage = 0.5
+        elite_percentage = 0.75
+        mutation_amount = int(len(self.__samples) * mutation_percentage)
+
+        plt.title(f'mutation percentage: {mutation_percentage}%, elite selection: {elite_percentage}%')
         
         while True:
             for i in Selector.choose_n_random(self.__samples, mutation_amount):
@@ -109,7 +112,7 @@ class Simulator:
             if not all(fitness_score < self.__fitness_goal for fitness_score in fitness_scores):
                 break
 
-            elite_samples = Selector.select_elite(self.__samples, fitness_scores, 0.75)
+            elite_samples = Selector.select_elite(self.__samples, fitness_scores, elite_percentage)
             self.__samples = self.__generate_crossovers(elite_samples, self.__num_samples - len(elite_samples))
             self.__samples.extend(elite_samples)
 
