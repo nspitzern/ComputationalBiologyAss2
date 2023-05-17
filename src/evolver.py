@@ -8,8 +8,8 @@ from src.selector import Selector
 class Evolver:
     def __init__(self, enc_letters: List[str]):
         self.length = len(enc_letters)
-        self.__crossover_min_thresh = 0 #int(self.length / 3)
-        self.__crossover_max_thresh = self.length #2 * self.__crossover_min_thresh
+        self.__crossover_min_thresh = 1 #int(self.length / 3)
+        self.__crossover_max_thresh = self.length - 1 #2 * self.__crossover_min_thresh
         self.enc_letters = enc_letters
 
     def mutate(self, dec_map: Dict[str, str]) -> Tuple[str, str, str]:
