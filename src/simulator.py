@@ -23,7 +23,7 @@ class Simulator:
         freq_2_letter: Dict[str, float] = parse_letters_freq('Letter2_Freq.txt')
 
         self.__letters = list(sorted(freq_1_letter.keys()))
-        self.__memory: Memory = Memory()
+        # self.__memory: Memory = Memory()
         self.__fitness_goal: float = fitness_goal
         self.__evolver: Evolver = Evolver(self.__letters)
         self.__samples: List[Sample] = generate_random(self.__letters, num_samples)
@@ -50,9 +50,9 @@ class Simulator:
             for i in Selector.choose_n_random(self.__samples, mutation_amount):
                 s = self.__samples[i]
                 mutation, c1, c2 = self.__evolver.mutate(s.dec_map)
-                while mutation in self.__memory:
-                    mutation, c1, c2 = self.__evolver.mutate(s.dec_map)
-                self.__memory.add(mutation)
+                # while mutation in self.__memory:
+                #     mutation, c1, c2 = self.__evolver.mutate(s.dec_map)
+                # self.__memory.add(mutation)
                 s.swap(c1, c2)
 
             # Decode the encrypted file
@@ -79,9 +79,9 @@ class Simulator:
             new_samples: List[Sample] = []
             samples_len = 0
             while samples_len + elite_num < self.__num_samples:
-                co1, co2 = self.__evolver.generate_valid_crossover(elite_samples, self.__memory)
-                self.__memory.add(co1)
-                self.__memory.add(co2)
+                co1, co2 = self.__evolver.generate_valid_crossover(elite_samples)
+                # self.__memory.add(co1)
+                # self.__memory.add(co2)
 
                 new_samples.append(Sample(self.__letters, decode_letters=co1))
                 new_samples.append(Sample(self.__letters, decode_letters=co2))

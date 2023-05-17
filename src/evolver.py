@@ -36,7 +36,7 @@ class Evolver:
         
         return cross_1, cross_2
 
-    def generate_valid_crossover(self, samples: List[str], memory: Memory) -> Tuple[str, str]:
+    def generate_valid_crossover(self, samples: List[str]) -> Tuple[str, str]:
         # Choose 2 samples for crossover
         i, j = Selector.choose_n_random(samples, 2)
         co1, co2 = self.crossover(''.join(samples[i].decode_letters), ''.join(samples[j].decode_letters))
