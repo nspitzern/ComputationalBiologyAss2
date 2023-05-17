@@ -1,5 +1,6 @@
 from typing import Dict, List, Tuple
 from random import randint
+from src.generator import is_valid
 from src.memory import Memory
 from src.selector import Selector
 
@@ -16,7 +17,7 @@ class Evolver:
         values = list(dec_map.values())
 
         # Choose 2 letters in random and swap their positions
-        i, j = Selector.choose_2_random(self.enc_letters)
+        i, j = Selector.choose_n_random(self.enc_letters, 2)
         c1, c2 = keys[i], keys[j]
 
         # Get permutation
@@ -37,11 +38,11 @@ class Evolver:
 
     def generate_valid_crossover(self, samples: List[str], memory: Memory) -> Tuple[str, str]:
         # Choose 2 samples for crossover
-        i, j = Selector.choose_2_random(samples)
+        i, j = Selector.choose_n_random(samples, 2)
         co1, co2 = self.crossover(''.join(samples[i].decode_letters), ''.join(samples[j].decode_letters))
 
-        while co1 in memory or co2 in memory:
-            i, j = Selector.choose_2_random(samples)
+        while not is_valid(co1) or not is_valid(co2):
+            i, j = Selector.choose_n_random(samples, 2)
             co1, co2 = self.crossover(''.join(samples[i].decode_letters), ''.join(samples[j].decode_letters))
         
         return co1, co2

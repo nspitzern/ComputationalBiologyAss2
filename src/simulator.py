@@ -30,14 +30,25 @@ class Simulator:
         self.__num_samples = num_samples
 
         self.__count_fitness_calls = 0
+    
+    def __plot_current(self, round_worst, round_average, round_best):
+        plt.plot(round_worst)
+        plt.plot(round_average)
+        plt.plot(round_best)
+        plt.draw()
+        plt.pause(0.01)
 
     def run(self):
         round_worst = []
         round_average = []
         round_best = []
+        mutation_amount = int(len(self.__samples) * 0.2)
+
+        plt.title('Sample progress')
         
         while True:
-            for s in self.__samples:
+            for i in Selector.choose_n_random(self.__samples, mutation_amount):
+                s = self.__samples[i]
                 mutation, c1, c2 = self.__evolver.mutate(s.dec_map)
                 while mutation in self.__memory:
                     mutation, c1, c2 = self.__evolver.mutate(s.dec_map)
@@ -53,12 +64,8 @@ class Simulator:
             round_worst.append(min(fitness_scores))
             round_average.append(statistics.mean(fitness_scores))
             round_best.append(max(fitness_scores))
-            plt.plot(round_worst)
-            plt.plot(round_average)
-            plt.plot(round_best)
-            plt.title('Sample progress')
-            plt.draw()
-            plt.pause(0.01)
+            self.__plot_current(round_worst, round_average, round_best)
+            
             print(f'Best: {max(fitness_scores) * 100}%, Worst: {min(fitness_scores) * 100}%, Mean: {statistics.mean(fitness_scores) * 100}%')
             self.__count_fitness_calls += len(dec_words)
             print(f'fitness calls: {self.__count_fitness_calls}')
@@ -90,3 +97,5 @@ class Simulator:
             f.write(f'fitness score: {fitness_scores[i]}{os.linesep}')
             f.write(f'dec: {best.decode_letters}{os.linesep}')
             f.writelines(dec[i])
+        
+        plt.savefig(f'output/plot_{datetime.now().strftime("%Y-%m-%d_%H-%M-%S")}.png', format='png')
