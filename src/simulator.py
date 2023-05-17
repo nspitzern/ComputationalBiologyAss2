@@ -69,6 +69,8 @@ class Simulator:
         filename = f'output/dec_{datetime.now().strftime("%Y-%m-%d_%H-%M-%S")}.txt'
         with open(filename, '+wt', encoding='utf-8') as f:
             f.write(f'fitness score: {fitness_scores[i]}{os.linesep}')
+            f.write(f'fitness calls: {self.__count_fitness_calls}{os.linesep}')
+            f.write(f'letters: {self.__letters}{os.linesep}')
             f.write(f'dec: {best.decode_letters}{os.linesep}')
             f.writelines(dec[i])
         
@@ -110,5 +112,11 @@ class Simulator:
             elite_samples = Selector.select_elite(self.__samples, fitness_scores, 0.75)
             self.__samples = self.__generate_crossovers(elite_samples, self.__num_samples - len(elite_samples))
             self.__samples.extend(elite_samples)
+
+        # Decode the encrypted file
+        dec = [Decoder.decode_words(self.enc, s.dec_map_int) for s in self.__samples]
+        dec_words = [d.strip().translate(str.maketrans('', '', punctuation)).split(' ') for d in dec]
+        # Calculate fitness score for each decode
+        fitness_scores = [check_words_in_dict_ratio(dec, self.dictionary) for dec in dec_words]
 
         self.__save(dec, fitness_scores)
