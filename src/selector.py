@@ -22,5 +22,5 @@ class Selector:
         return samples[len(samples) - ratio:]
 
     @staticmethod
-    def choose_2_random(arr: List):
-        return sample(range(len(arr)), 2)
+    def choose_n_random(arr: List, n: int):
+        return sample(range(len(arr)), n)

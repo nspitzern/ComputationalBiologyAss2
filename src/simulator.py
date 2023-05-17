@@ -88,6 +88,7 @@ class Simulator:
                 samples_len += 2
 
             self.__samples = new_samples
+            self.__samples.extend(elite_samples)
 
         i = np.argmax(fitness_scores)
         best = self.__samples[i]
