@@ -30,6 +30,7 @@ class Simulator:
 
         self.__count_fitness_calls = 0
     
+
     def __plot_current(self, round_worst, round_average, round_best):
         plt.plot(round_worst)
         plt.plot(round_average)
@@ -37,6 +38,7 @@ class Simulator:
         plt.draw()
         plt.pause(0.01)
     
+
     def __generate_crossovers(self, elite_samples: List[Sample], n: int) -> List[Sample]:
         """
         Generate n crossovers from given elite samples.
@@ -58,6 +60,20 @@ class Simulator:
             samples_len += 2
         
         return new_samples
+    
+
+    def __save(self, dec: List[str], fitness_scores: List[float]) -> None:
+        i = np.argmax(fitness_scores)
+        best = self.__samples[i]
+
+        filename = f'output/dec_{datetime.now().strftime("%Y-%m-%d_%H-%M-%S")}.txt'
+        with open(filename, '+wt', encoding='utf-8') as f:
+            f.write(f'fitness score: {fitness_scores[i]}{os.linesep}')
+            f.write(f'dec: {best.decode_letters}{os.linesep}')
+            f.writelines(dec[i])
+        
+        plt.savefig(f'output/plot_{datetime.now().strftime("%Y-%m-%d_%H-%M-%S")}.png', format='png')
+
 
     def run(self):
         round_worst = []
@@ -95,13 +111,4 @@ class Simulator:
             self.__samples = self.__generate_crossovers(elite_samples, self.__num_samples - len(elite_samples))
             self.__samples.extend(elite_samples)
 
-        i = np.argmax(fitness_scores)
-        best = self.__samples[i]
-
-        filename = f'output/dec_{datetime.now().strftime("%Y-%m-%d_%H-%M-%S")}.txt'
-        with open(filename, '+wt', encoding='utf-8') as f:
-            f.write(f'fitness score: {fitness_scores[i]}{os.linesep}')
-            f.write(f'dec: {best.decode_letters}{os.linesep}')
-            f.writelines(dec[i])
-        
-        plt.savefig(f'output/plot_{datetime.now().strftime("%Y-%m-%d_%H-%M-%S")}.png', format='png')
+        self.__save(dec, fitness_scores)
