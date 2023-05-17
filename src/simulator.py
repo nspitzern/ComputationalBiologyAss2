@@ -23,7 +23,6 @@ class Simulator:
         freq_2_letter: Dict[str, float] = parse_letters_freq('Letter2_Freq.txt')
 
         self.__letters = list(sorted(freq_1_letter.keys()))
-        # self.__memory: Memory = Memory()
         self.__fitness_goal: float = fitness_goal
         self.__evolver: Evolver = Evolver(self.__letters)
         self.__samples: List[Sample] = generate_random(self.__letters, num_samples)
@@ -37,6 +36,28 @@ class Simulator:
         plt.plot(round_best)
         plt.draw()
         plt.pause(0.01)
+    
+    def __generate_crossovers(self, elite_samples: List[Sample], n: int) -> List[Sample]:
+        """
+        Generate n crossovers from given elite samples.
+
+        Args:
+            elite_samples (List[Sample]): samples on which to generate crossovers
+            n (int): number of samples to generate
+
+        Returns:
+            List[Sample]: valid crossover samples
+        """
+        new_samples: List[Sample] = []
+        samples_len = 0
+
+        while samples_len < n:
+            co1, co2 = self.__evolver.generate_valid_crossover(elite_samples)
+            new_samples.append(Sample(self.__letters, decode_letters=co1))
+            new_samples.append(Sample(self.__letters, decode_letters=co2))
+            samples_len += 2
+        
+        return new_samples
 
     def run(self):
         round_worst = []
@@ -49,10 +70,7 @@ class Simulator:
         while True:
             for i in Selector.choose_n_random(self.__samples, mutation_amount):
                 s = self.__samples[i]
-                mutation, c1, c2 = self.__evolver.mutate(s.dec_map)
-                # while mutation in self.__memory:
-                #     mutation, c1, c2 = self.__evolver.mutate(s.dec_map)
-                # self.__memory.add(mutation)
+                _, c1, c2 = self.__evolver.mutate(s.dec_map)
                 s.swap(c1, c2)
 
             # Decode the encrypted file
@@ -74,20 +92,7 @@ class Simulator:
                 break
 
             elite_samples = Selector.select_elite(self.__samples, fitness_scores, 0.75)
-            elite_num = len(elite_samples)
-
-            new_samples: List[Sample] = []
-            samples_len = 0
-            while samples_len + elite_num < self.__num_samples:
-                co1, co2 = self.__evolver.generate_valid_crossover(elite_samples)
-                # self.__memory.add(co1)
-                # self.__memory.add(co2)
-
-                new_samples.append(Sample(self.__letters, decode_letters=co1))
-                new_samples.append(Sample(self.__letters, decode_letters=co2))
-                samples_len += 2
-
-            self.__samples = new_samples
+            self.__samples = self.__generate_crossovers(elite_samples, self.__num_samples - len(elite_samples))
             self.__samples.extend(elite_samples)
 
         i = np.argmax(fitness_scores)
