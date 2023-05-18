@@ -19,7 +19,7 @@ OUTPUT_DIR_PATH = 'output'
 
 
 class Simulator:
-    def __init__(self, num_samples: int, fitness_goal: float) -> None:
+    def __init__(self, num_samples: int, fitness_goal: float, mutation_percentage: float = 0.5, elite_percentage: float = 0.75) -> None:
         self.enc = parse_encoded('enc.txt')
         self.dictionary: Set[str] = set(parse_dict('dict.txt'))
         freq_1_letter: Dict[str, float] = parse_letters_freq('Letter_Freq.txt')
@@ -30,6 +30,8 @@ class Simulator:
         self.__evolver: Evolver = Evolver(self.__letters)
         self.__samples: List[Sample] = generate_random(self.__letters, num_samples)
         self.__num_samples = num_samples
+        self.__mutation_percentage = mutation_percentage
+        self.__elite_percentage = elite_percentage
 
         self.__count_fitness_calls = 0
 
@@ -86,11 +88,9 @@ class Simulator:
         round_average = []
         round_best = []
 
-        mutation_percentage = 0.5
-        elite_percentage = 0.75
-        mutation_amount = int(len(self.__samples) * mutation_percentage)
+        mutation_amount = int(len(self.__samples) * self.__mutation_percentage)
 
-        plt.title(f'mutation percentage: {mutation_percentage * 100}%, elite selection: {elite_percentage * 100}%')
+        plt.title(f'mutation percentage: {self.__mutation_percentage * 100}%, elite selection: {self.__elite_percentage * 100}%')
 
         while True:
             for i in Selector.choose_n_random(self.__samples, mutation_amount):
@@ -116,7 +116,7 @@ class Simulator:
             if not all(fitness_score < self.__fitness_goal for fitness_score in fitness_scores):
                 break
 
-            elite_samples = Selector.select_elite(self.__samples, fitness_scores, elite_percentage)
+            elite_samples = Selector.select_elite(self.__samples, fitness_scores, self.__elite_percentage)
             self.__samples = self.__generate_crossovers(elite_samples, self.__num_samples - len(elite_samples))
             self.__samples.extend(elite_samples)
 
