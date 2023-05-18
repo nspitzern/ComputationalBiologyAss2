@@ -15,6 +15,9 @@ from src.decoder import Decoder
 from src.fitness import check_words_in_dict_ratio
 
 
+OUTPUT_DIR_PATH = 'output'
+
+
 class Simulator:
     def __init__(self, num_samples: int, fitness_goal: float) -> None:
         self.enc = parse_encoded('enc.txt')
@@ -63,7 +66,10 @@ class Simulator:
         i = np.argmax(fitness_scores)
         best = self.__samples[i]
 
-        filename = f'output/dec_{datetime.now().strftime("%Y-%m-%d_%H-%M-%S")}.txt'
+        if not os.path.exists(OUTPUT_DIR_PATH):
+            os.mkdir(OUTPUT_DIR_PATH)
+
+        filename = os.path.join(OUTPUT_DIR_PATH, f'dec_{datetime.now().strftime("%Y-%m-%d_%H-%M-%S")}.txt')
         with open(filename, '+wt', encoding='utf-8') as f:
             f.write(f'fitness score: {fitness_scores[i]}{os.linesep}')
             f.write(f'fitness calls: {self.__count_fitness_calls}{os.linesep}')
@@ -71,7 +77,7 @@ class Simulator:
             f.write(f'dec: {best.decode_letters}{os.linesep}')
             f.writelines(dec[i])
 
-        plt.savefig(f'output/plot_{datetime.now().strftime("%Y-%m-%d_%H-%M-%S")}.png', format='png')
+        plt.savefig(os.path.join(OUTPUT_DIR_PATH, f'plot_{datetime.now().strftime("%Y-%m-%d_%H-%M-%S")}.png'), format='png')
 
     def run(self):
         round_worst = []
