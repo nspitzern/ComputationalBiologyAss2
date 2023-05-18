@@ -3,12 +3,11 @@ import statistics
 import numpy as np
 import matplotlib.pyplot as plt
 from string import punctuation
-from typing import Dict, List, Set
+from typing import Dict, List, Set, Tuple
 from datetime import datetime
 from src.evolver import Evolver
 from src.files_parser import parse_dict, parse_encoded, parse_letters_freq
 from src.generator import generate_random
-from src.memory import Memory
 from src.sample import Sample
 from src.selector import Selector
 from src.decoder import Decoder
@@ -28,7 +27,6 @@ class Simulator:
         self.__letters = list(sorted(freq_1_letter.keys()))
         self.__fitness_goal: float = fitness_goal
         self.__evolver: Evolver = Evolver(self.__letters)
-        self.__samples: List[Sample] = generate_random(self.__letters, num_samples)
         self.__num_samples = num_samples
         self.__mutation_percentage = mutation_percentage
         self.__elite_percentage = elite_percentage
@@ -66,9 +64,9 @@ class Simulator:
 
         return new_samples
 
-    def __save(self, dec: List[str], fitness_scores: List[float]) -> None:
+    def __save(self, samples: List[Sample], dec: List[str], fitness_scores: List[float]) -> None:
         i = np.argmax(fitness_scores)
-        best = self.__samples[i]
+        best = samples[i]
 
         if not os.path.exists(OUTPUT_DIR_PATH):
             os.mkdir(OUTPUT_DIR_PATH)
@@ -82,48 +80,66 @@ class Simulator:
             f.writelines(dec[i])
 
         plt.savefig(os.path.join(OUTPUT_DIR_PATH, f'plot_{datetime.now().strftime("%Y-%m-%d_%H-%M-%S")}.png'), format='png')
+    
+    
+    def __decode(self, samples: List[Sample]) -> Tuple[List[str], List[List[str]]]:
+        dec = [Decoder.decode_words(self.enc, s.dec_map_int) for s in samples]
+        dec_words = [d.strip().translate(str.maketrans('', '', punctuation)).split(' ') for d in dec]
+        return dec, dec_words
+    
+    def __fitness(self, dec_words: List[List[str]]) -> List[float]:
+        return [check_words_in_dict_ratio(dec, self.dictionary) for dec in dec_words]
+    
+    
+    def __add_current_iteration_data(self, fitness_scores: List[float], 
+                                     round_worst: List[float], round_average: List[float], 
+                                     round_best: List[float]):
+        round_worst.append(min(fitness_scores) * 100)
+        round_average.append(statistics.mean(fitness_scores) * 100)
+        round_best.append(max(fitness_scores) * 100)
+    
 
     def run(self):
         round_worst = []
         round_average = []
         round_best = []
-
-        mutation_amount = int(len(self.__samples) * self.__mutation_percentage)
+        mutation_amount = int(self.__num_samples * self.__mutation_percentage)
 
         plt.title(f'mutation percentage: {self.__mutation_percentage * 100}%, elite selection: {self.__elite_percentage * 100}%')
+        
+        # Generate initial population
+        samples: List[Sample] = generate_random(self.__letters, self.__num_samples)
+        
+        # Compute fitness
+        dec, dec_words = self.__decode(samples)
+        fitness_scores = self.__fitness(dec_words)
+        
+        self.__add_current_iteration_data(fitness_scores, round_worst, round_average, round_best)
+        self.__plot_current(round_worst, round_average, round_best)
 
-        while True:
-            for i in Selector.choose_n_random(self.__samples, mutation_amount):
-                s = self.__samples[i]
+        while not all(fitness_score < self.__fitness_goal for fitness_score in fitness_scores):
+            # Selection
+            elite_samples = Selector.select_elite(samples, fitness_scores, self.__elite_percentage)
+            
+            # Crossover
+            samples = self.__generate_crossovers(elite_samples, self.__num_samples - len(elite_samples))
+            samples.extend(elite_samples)
+            
+            # Mutation
+            for i in Selector.choose_n_random(samples, mutation_amount):
+                s = samples[i]
                 _, c1, c2 = self.__evolver.mutate(s.dec_map)
                 s.swap(c1, c2)
-
-            # Decode the encrypted file
-            dec = [Decoder.decode_words(self.enc, s.dec_map_int) for s in self.__samples]
-            dec_words = [d.strip().translate(str.maketrans('', '', punctuation)).split(' ') for d in dec]
-            # Calculate fitness score for each decode
-            fitness_scores = [check_words_in_dict_ratio(dec, self.dictionary) for dec in dec_words]
-
-            round_worst.append(min(fitness_scores) * 100)
-            round_average.append(statistics.mean(fitness_scores) * 100)
-            round_best.append(max(fitness_scores) * 100)
+            
+            # Compute fitness
+            dec, dec_words = self.__decode(samples)
+            fitness_scores = self.__fitness(dec_words)
+            
+            self.__add_current_iteration_data(fitness_scores, round_worst, round_average, round_best)
             self.__plot_current(round_worst, round_average, round_best)
 
             print(f'Best: {max(fitness_scores) * 100}%, Worst: {min(fitness_scores) * 100}%, Mean: {statistics.mean(fitness_scores) * 100}%')
             self.__count_fitness_calls += len(dec_words)
             print(f'fitness calls: {self.__count_fitness_calls}')
 
-            if not all(fitness_score < self.__fitness_goal for fitness_score in fitness_scores):
-                break
-
-            elite_samples = Selector.select_elite(self.__samples, fitness_scores, self.__elite_percentage)
-            self.__samples = self.__generate_crossovers(elite_samples, self.__num_samples - len(elite_samples))
-            self.__samples.extend(elite_samples)
-
-        # Decode the encrypted file
-        dec = [Decoder.decode_words(self.enc, s.dec_map_int) for s in self.__samples]
-        dec_words = [d.strip().translate(str.maketrans('', '', punctuation)).split(' ') for d in dec]
-        # Calculate fitness score for each decode
-        fitness_scores = [check_words_in_dict_ratio(dec, self.dictionary) for dec in dec_words]
-
-        self.__save(dec, fitness_scores)
+        self.__save(samples, dec, fitness_scores)
