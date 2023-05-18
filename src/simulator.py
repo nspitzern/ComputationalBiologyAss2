@@ -37,6 +37,8 @@ class Simulator:
         plt.plot(round_worst)
         plt.plot(round_average)
         plt.plot(round_best)
+        plt.xlabel('Generation number')
+        plt.ylabel('Fitness Score #')
         plt.draw()
         plt.pause(0.01)
 
@@ -71,7 +73,7 @@ class Simulator:
 
         filename = os.path.join(OUTPUT_DIR_PATH, f'dec_{datetime.now().strftime("%Y-%m-%d_%H-%M-%S")}.txt')
         with open(filename, '+wt', encoding='utf-8') as f:
-            f.write(f'fitness score: {fitness_scores[i]}{os.linesep}')
+            f.write(f'fitness score: {fitness_scores[i] * 100:.3f}{os.linesep}')
             f.write(f'fitness calls: {self.__count_fitness_calls}{os.linesep}')
             f.write(f'letters: {self.__letters}{os.linesep}')
             f.write(f'dec: {best.decode_letters}{os.linesep}')
@@ -88,7 +90,7 @@ class Simulator:
         elite_percentage = 0.75
         mutation_amount = int(len(self.__samples) * mutation_percentage)
 
-        plt.title(f'mutation percentage: {mutation_percentage}%, elite selection: {elite_percentage}%')
+        plt.title(f'mutation percentage: {mutation_percentage * 100}%, elite selection: {elite_percentage * 100}%')
 
         while True:
             for i in Selector.choose_n_random(self.__samples, mutation_amount):
@@ -102,9 +104,9 @@ class Simulator:
             # Calculate fitness score for each decode
             fitness_scores = [check_words_in_dict_ratio(dec, self.dictionary) for dec in dec_words]
 
-            round_worst.append(min(fitness_scores))
-            round_average.append(statistics.mean(fitness_scores))
-            round_best.append(max(fitness_scores))
+            round_worst.append(min(fitness_scores) * 100)
+            round_average.append(statistics.mean(fitness_scores) * 100)
+            round_best.append(max(fitness_scores) * 100)
             self.__plot_current(round_worst, round_average, round_best)
 
             print(f'Best: {max(fitness_scores) * 100}%, Worst: {min(fitness_scores) * 100}%, Mean: {statistics.mean(fitness_scores) * 100}%')
