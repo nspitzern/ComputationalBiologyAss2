@@ -38,7 +38,7 @@ class Simulator:
         plt.plot(round_average)
         plt.plot(round_best)
         plt.xlabel('Generation number')
-        plt.ylabel('Fitness Score #')
+        plt.ylabel('Fitness Score %')
         plt.draw()
         plt.pause(0.01)
 
@@ -117,7 +117,7 @@ class Simulator:
         self.__add_current_iteration_data(fitness_scores, round_worst, round_average, round_best)
         self.__plot_current(round_worst, round_average, round_best)
 
-        while not all(fitness_score < self.__fitness_goal for fitness_score in fitness_scores):
+        while all(fitness_score < self.__fitness_goal for fitness_score in fitness_scores):
             # Selection
             elite_samples = Selector.select_elite(samples, fitness_scores, self.__elite_percentage)
             
