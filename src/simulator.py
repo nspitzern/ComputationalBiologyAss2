@@ -29,7 +29,6 @@ class Simulator:
         self.__num_samples = num_samples
 
         self.__count_fitness_calls = 0
-    
 
     def __plot_current(self, round_worst, round_average, round_best):
         plt.plot(round_worst)
@@ -37,7 +36,6 @@ class Simulator:
         plt.plot(round_best)
         plt.draw()
         plt.pause(0.01)
-    
 
     def __generate_crossovers(self, elite_samples: List[Sample], n: int) -> List[Sample]:
         """
@@ -58,9 +56,8 @@ class Simulator:
             new_samples.append(Sample(self.__letters, decode_letters=co1))
             new_samples.append(Sample(self.__letters, decode_letters=co2))
             samples_len += 2
-        
+
         return new_samples
-    
 
     def __save(self, dec: List[str], fitness_scores: List[float]) -> None:
         i = np.argmax(fitness_scores)
@@ -73,9 +70,8 @@ class Simulator:
             f.write(f'letters: {self.__letters}{os.linesep}')
             f.write(f'dec: {best.decode_letters}{os.linesep}')
             f.writelines(dec[i])
-        
-        plt.savefig(f'output/plot_{datetime.now().strftime("%Y-%m-%d_%H-%M-%S")}.png', format='png')
 
+        plt.savefig(f'output/plot_{datetime.now().strftime("%Y-%m-%d_%H-%M-%S")}.png', format='png')
 
     def run(self):
         round_worst = []
@@ -87,7 +83,7 @@ class Simulator:
         mutation_amount = int(len(self.__samples) * mutation_percentage)
 
         plt.title(f'mutation percentage: {mutation_percentage}%, elite selection: {elite_percentage}%')
-        
+
         while True:
             for i in Selector.choose_n_random(self.__samples, mutation_amount):
                 s = self.__samples[i]
@@ -104,11 +100,11 @@ class Simulator:
             round_average.append(statistics.mean(fitness_scores))
             round_best.append(max(fitness_scores))
             self.__plot_current(round_worst, round_average, round_best)
-            
+
             print(f'Best: {max(fitness_scores) * 100}%, Worst: {min(fitness_scores) * 100}%, Mean: {statistics.mean(fitness_scores) * 100}%')
             self.__count_fitness_calls += len(dec_words)
             print(f'fitness calls: {self.__count_fitness_calls}')
-            
+
             if not all(fitness_score < self.__fitness_goal for fitness_score in fitness_scores):
                 break
 

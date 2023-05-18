@@ -3,7 +3,7 @@ from random import shuffle
 
 
 class Sample:
-    def __init__(self, letters: List[str], decode_letters: List[str] = None):
+    def __init__(self, letters: List[str], decode_letters: str = None):
         if not decode_letters:
             decode_letters = list(letters[:])
             shuffle(decode_letters)

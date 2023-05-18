@@ -14,5 +14,5 @@ def generate_random(enc_letters: List[str], n_samples: int) -> List[Sample]:
     return g
 
 
-def is_valid(letters: List[str]) -> bool:
+def is_valid(letters: str) -> bool:
     return len(letters) == len(set(letters))
