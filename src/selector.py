@@ -9,17 +9,19 @@ class Selector:
     @staticmethod
     def select_elite(samples, fitness_scores, percentile: float) -> List[Sample]:
         """
-
-        :param samples:
-        :param fitness_scores:
+        Returns a list of top percentile samples.
+        
+        :param samples: List of samples
+        :param fitness_scores: Sample fitness scores
         :param percentile: Which percentile to keep
         :return:
         """
-        ratio = floor(len(fitness_scores) - percentile * len(fitness_scores))  # how many samples to return
+        # Calculate starting index from which to select
+        start_index = floor(len(fitness_scores) - percentile * len(fitness_scores))
 
-        # sort the
-        samples, fitness_scores = zip(*sorted(zip(samples, fitness_scores), key=lambda x: x[1]))
-        return samples[len(samples) - ratio:]
+        # Sort the samples by fitness
+        sorted_samples, fitness_scores = zip(*sorted(zip(samples, fitness_scores), key=lambda x: x[1]))
+        return sorted_samples[start_index:]
 
     @staticmethod
     def choose_n_random(arr: List, n: int):
