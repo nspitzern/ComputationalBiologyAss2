@@ -76,6 +76,22 @@ class Evolver:
         co = self.pmx_crossover(''.join(s1.decode_letters), ''.join(s2.decode_letters))
         return [co]
 
+    def order_crossover(self, s1: str, s2: str) -> Tuple[str, str]:
+        i = randint(self.__crossover_min_thresh, self.__crossover_max_thresh)
+
+        cross1 = s1[:i]
+        cross2 = s2[:i]
+
+        for s in s2:
+            if s not in cross1:
+                cross1 += s
+
+        for s in s1:
+            if s not in cross2:
+                cross2 += s
+
+        return cross1, cross2
+
     def generate_valid_crossover(self, samples: List[Sample], fitness_scores: List[float]) -> List[str]:
         # Choose 2 samples for crossover
         s1, s2 = Selector.choose_n_weighted_random(samples, fitness_scores, 2)

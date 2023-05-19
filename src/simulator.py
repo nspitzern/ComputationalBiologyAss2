@@ -158,3 +158,29 @@ class Simulator:
             step += 1
 
         self.__save(samples, dec, fitness_scores, step)
+
+    def run_multiple(self, num_runs):
+        best_results = dict()
+
+        for i in range(num_runs):
+            fitnesses, samples = self.run()
+
+            best_results[i] = {
+                'fitness': fitnesses,
+                'samples': samples
+            }
+
+        best_fitness = 0
+        best_samples = None
+
+        for i in range(num_runs):
+            fitnesses = best_results[i]['fitness']
+
+            if max(fitnesses) >= best_fitness:
+                best_fitness = fitnesses
+                best_samples = best_results[i]['samples']
+
+        dec, dec_words = self.__decode(best_samples)
+
+        self.__save(best_samples, dec, best_fitness, len(best_fitness))
+
