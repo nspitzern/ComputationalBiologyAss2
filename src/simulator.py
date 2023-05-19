@@ -28,12 +28,21 @@ class Simulator:
         self.__letters = list(sorted(freq_1_letter.keys()))
         self.__fitness_goal: float = fitness_goal
         self.__evolver: Evolver = Evolver(self.__letters)
-        self.__scheduler = Scheduler(mutation_percentage, decay=1e-3, min_val=0.2)
+        self.__scheduler = Scheduler(mutation_percentage, decay=1e-3, min_val=0.05)
         self.__num_samples = num_samples
         self.__mutation_percentage = mutation_percentage
         self.__elite_percentage = elite_percentage
 
         self.__count_fitness_calls = 0
+    
+    def __should_run(self, step: int, fitness_scores: List[float], fitness_goals: Dict[int, float] = None):
+        if fitness_goals:
+            max_fitness = max(fitness_scores)
+            for k, v in sorted(fitness_goals.items(), reverse=True):
+                if step >= k and max_fitness < v:
+                    return False
+
+        return all(fitness_score <= self.__fitness_goal for fitness_score in fitness_scores)
 
     def __plot_current(self, round_worst, round_average, round_best):
         plt.plot(round_worst)
@@ -106,7 +115,7 @@ class Simulator:
         round_average.append(statistics.mean(fitness_scores) * 100)
         round_best.append(max(fitness_scores) * 100)
 
-    def run(self):
+    def run(self, fitness_goals: Dict[int, float] = None):
         round_worst = []
         round_average = []
         round_best = []
@@ -125,7 +134,7 @@ class Simulator:
         self.__add_current_iteration_data(fitness_scores, round_worst, round_average, round_best)
         self.__plot_current(round_worst, round_average, round_best)
 
-        while all(fitness_score < self.__fitness_goal for fitness_score in fitness_scores):
+        while self.__should_run(step, fitness_scores, fitness_goals):
             # Selection
             elite_samples = Selector.select_elite(samples, fitness_scores, self.__elite_percentage)
             
@@ -158,6 +167,7 @@ class Simulator:
             step += 1
 
         self.__save(samples, dec, fitness_scores, step)
+        plt.cla()
 
     def run_multiple(self, num_runs):
         best_results = dict()
