@@ -48,7 +48,7 @@ class Evolver:
         
         return t
     
-    def pmx_crossover(self, s1: str, s2: str) -> Tuple[str, str]:
+    def pmx_crossover(self, s1: str, s2: str) -> str:
         i = randint(self.__crossover_min_thresh, self.__crossover_max_thresh)
         j = randint(self.__crossover_min_thresh, self.__crossover_max_thresh)
 
