@@ -9,6 +9,9 @@ class Sample:
             shuffle(decode_letters)
         self.__dec_map: Dict[str, str] = {letters[i]: decode_letters[i] for i in range(len(letters))}
         self.__dec_map_int: Dict[int, int] = {ord(letters[i]): ord(decode_letters[i]) for i in range(len(letters))}
+
+    def __repr__(self):
+        return ''.join(self.decode_letters)
     
     @property
     def dec_map(self):
