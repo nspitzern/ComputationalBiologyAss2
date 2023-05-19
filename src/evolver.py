@@ -92,6 +92,17 @@ class Evolver:
 
         return cross1, cross2
 
+    def generate_order_crossover(self, samples: List[Sample], fitness_scores: List[float]) -> List[str]:
+        # Choose 2 samples for crossover
+        s1, s2 = Selector.choose_n_weighted_random(samples, fitness_scores, 2)
+        co1, co2 = self.order_crossover(''.join(s1.decode_letters), ''.join(s2.decode_letters))
+
+        while not is_valid(co1) or not is_valid(co2):
+            s1, s2 = Selector.choose_n_weighted_random(samples, fitness_scores, 2)
+            co1, co2 = self.order_crossover(''.join(s1.decode_letters), ''.join(s2.decode_letters))
+
+        return [co1, co2]
+
     def generate_valid_crossover(self, samples: List[Sample], fitness_scores: List[float]) -> List[str]:
         # Choose 2 samples for crossover
         s1, s2 = Selector.choose_n_weighted_random(samples, fitness_scores, 2)
