@@ -28,7 +28,7 @@ class Simulator:
         self.__letters = list(sorted(freq_1_letter.keys()))
         self.__fitness_goal: float = fitness_goal
         self.__evolver: Evolver = Evolver(self.__letters)
-        self.__scheduler = Scheduler(mutation_percentage, decay=1e-3)
+        self.__scheduler = Scheduler(mutation_percentage, decay=1e-3, min_val=0.2)
         self.__num_samples = num_samples
         self.__mutation_percentage = mutation_percentage
         self.__elite_percentage = elite_percentage
@@ -150,6 +150,7 @@ class Simulator:
             print(f'Best: {max(fitness_scores) * 100}%, Worst: {min(fitness_scores) * 100}%, Mean: {statistics.mean(fitness_scores) * 100}%')
             self.__count_fitness_calls += len(dec_words)
             print(f'fitness calls: {self.__count_fitness_calls}')
+            print(f'generation: {step}')
             print(f'Current Mutation rate: {mutation_prob}')
 
             step += 1
