@@ -1,6 +1,6 @@
 from typing import List
 from math import floor
-from random import sample
+from random import choices, sample
 
 from src.generator import Sample
 
@@ -26,3 +26,7 @@ class Selector:
     @staticmethod
     def choose_n_random(arr: List, n: int):
         return sample(range(len(arr)), n)
+    
+    @staticmethod
+    def choose_n_weighted_random(arr: List, weights: List[float], n: int):
+        return choices(arr, weights, k=n)
