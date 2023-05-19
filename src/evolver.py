@@ -3,23 +3,22 @@ from random import randint
 
 from src.generator import is_valid
 from src.sample import Sample
-from src.memory import Memory
 from src.selector import Selector
 
 
 class Evolver:
     def __init__(self, enc_letters: List[str]):
-        self.length = len(enc_letters)
+        self.__length = len(enc_letters)
         self.__crossover_min_thresh = 1 #int(self.length / 3)
-        self.__crossover_max_thresh = self.length - 1 #2 * self.__crossover_min_thresh
-        self.enc_letters = enc_letters
+        self.__crossover_max_thresh = self.__length - 1 #2 * self.__crossover_min_thresh
+        self.__enc_letters = enc_letters
 
     def mutate(self, dec_map: Dict[str, str]) -> Tuple[str, str, str]:
         keys = list(dec_map.keys())
         values = list(dec_map.values())
 
         # Choose 2 letters in random and swap their positions
-        i, j = Selector.choose_n_random(self.enc_letters, 2)
+        i, j = Selector.choose_n_random(self.__enc_letters, 2)
         c1, c2 = keys[i], keys[j]
 
         # Get permutation
@@ -28,7 +27,7 @@ class Evolver:
         
         return ''.join(target_letters), c1, c2
 
-    def crossover(self, s1: str, s2: str) -> Tuple[str, str]:
+    def one_point_crossover(self, s1: str, s2: str) -> Tuple[str, str]:
         i = randint(self.__crossover_min_thresh, self.__crossover_max_thresh)
 
         cross_1 = s1[:i]
@@ -37,14 +36,53 @@ class Evolver:
         cross_2 += s1[i:]
         
         return cross_1, cross_2
+    
+    def __get_replace_key(self, arr1: str, arr2: str, res: List[str], start: int):
+        k = arr1[start]
+        t = arr2.index(k)
+        k = arr1[t]
 
-    def generate_valid_crossover(self, samples: List[Sample]) -> Tuple[str, str]:
+        while res[t]:
+            t = arr2.index(k)
+            k = arr1[t]
+        
+        return t
+    
+    def pmx_crossover(self, s1: str, s2: str) -> Tuple[str, str]:
+        i = randint(self.__crossover_min_thresh, self.__crossover_max_thresh)
+        j = randint(self.__crossover_min_thresh, self.__crossover_max_thresh)
+
+        while i == j:
+            j = randint(self.__crossover_min_thresh, self.__crossover_max_thresh)
+
+        crossover: List[str] = [''] * len(self.__enc_letters)
+        for k in range(i, j + 1):
+            crossover[k] = s1[k]
+
+        for k in range(i, j + 1):
+            if s2[k] not in crossover:
+                index = self.__get_replace_key(s1, s2, crossover, k)
+                crossover[index] = s2[k]
+                
+        for i, v in enumerate(crossover):
+            if not v:
+                crossover[i] = s2[i]
+        
+        return ''.join(crossover)
+    
+    def generate_pmx_crossover(self, samples: List[Sample], fitness_scores: List[float]) -> List[str]:
         # Choose 2 samples for crossover
-        i, j = Selector.choose_n_random(samples, 2)
-        co1, co2 = self.crossover(''.join(samples[i].decode_letters), ''.join(samples[j].decode_letters))
+        s1, s2 = Selector.choose_n_weighted_random(samples, fitness_scores, 2)
+        co = self.pmx_crossover(''.join(s1.decode_letters), ''.join(s2.decode_letters))
+        return [co]
+
+    def generate_valid_crossover(self, samples: List[Sample], fitness_scores: List[float]) -> List[str]:
+        # Choose 2 samples for crossover
+        s1, s2 = Selector.choose_n_weighted_random(samples, fitness_scores, 2)
+        co1, co2 = self.one_point_crossover(''.join(s1.decode_letters), ''.join(s2.decode_letters))
 
         while not is_valid(co1) or not is_valid(co2):
-            i, j = Selector.choose_n_random(samples, 2)
-            co1, co2 = self.crossover(''.join(samples[i].decode_letters), ''.join(samples[j].decode_letters))
+            s1, s2 = Selector.choose_n_weighted_random(samples, fitness_scores, 2)
+            co1, co2 = self.one_point_crossover(''.join(s1.decode_letters), ''.join(s2.decode_letters))
         
-        return co1, co2
+        return [co1, co2]

@@ -44,7 +44,7 @@ class Simulator:
         plt.draw()
         plt.pause(0.01)
 
-    def __generate_crossovers(self, elite_samples: List[Sample], n: int) -> List[Sample]:
+    def __generate_crossovers(self, samples: List[Sample], fitness_scores: List[float], n: int) -> List[Sample]:
         """
         Generate n crossovers from given elite samples.
 
@@ -59,10 +59,12 @@ class Simulator:
         samples_len = 0
 
         while samples_len < n:
-            co1, co2 = self.__evolver.generate_valid_crossover(elite_samples)
-            new_samples.append(Sample(self.__letters, decode_letters=co1))
-            new_samples.append(Sample(self.__letters, decode_letters=co2))
-            samples_len += 2
+            co = self.__evolver.generate_pmx_crossover(samples, fitness_scores)
+
+            for o in co:
+                new_samples.append(Sample(self.__letters, decode_letters=o))
+
+            samples_len += len(co)
 
         return new_samples
 
@@ -128,7 +130,7 @@ class Simulator:
             elite_samples = Selector.select_elite(samples, fitness_scores, self.__elite_percentage)
             
             # Crossover
-            samples = self.__generate_crossovers(elite_samples, self.__num_samples - len(elite_samples))
+            samples = self.__generate_crossovers(samples, fitness_scores, self.__num_samples - len(elite_samples))
             samples.extend(elite_samples)
             
             # Mutation
