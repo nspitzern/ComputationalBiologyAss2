@@ -18,22 +18,41 @@ from src.scheduler import Scheduler
 OUTPUT_DIR_PATH = 'output'
 
 
+class MutationArgs:
+    def __init__(self, mutation_percentage: float, mutation_decay: float, mutation_min_percentage: float) -> None:
+        self.mutation_percentage = mutation_percentage
+        self.mutation_decay = mutation_decay
+        self.mutation_min_percentage = mutation_min_percentage
+
+
+class SimulationArgs:
+    def __init__(self, fitness_goal: float, elite_percentile: float, 
+                 mutation_percentage: float, mutation_decay: float, mutation_min_percentage: float,
+                 generation_tolerance: int, generation_tolerance_percentage: float) -> None:
+        self.fitness_goal = fitness_goal
+        self.elite_percentile = elite_percentile
+        self.mutation = MutationArgs(mutation_percentage, mutation_decay, mutation_min_percentage)
+
+        self.generation_tolerance = generation_tolerance
+        self.generation_tolerance_percentage = generation_tolerance_percentage * 100
+
+
 class SimulationHistory:
     def __init__(self) -> None:
-        self.__worst = []
-        self.__average = []
-        self.__best = []
+        self.__worst: List[float] = []
+        self.__average: List[float] = []
+        self.__best: List[float] = []
 
     @property
-    def worst(self):
+    def worst(self) -> List[float]:
         return self.__worst
     
     @property
-    def average(self):
+    def average(self) -> List[float]:
         return self.__average
     
     @property
-    def best(self):
+    def best(self) -> List[float]:
         return self.__best
     
     def add(self, worst, average, best) -> None:
@@ -43,32 +62,39 @@ class SimulationHistory:
     
     def last_n_best_change(self, n: int) -> float:
         last_n = self.__best[-n:]
-        return sum(last_n) / statistics.mean(last_n)
+        return max(last_n) - min(last_n)
 
 
 class Simulator:
-    def __init__(self, num_samples: int, fitness_goal: float, mutation_percentage: float = 0.5, elite_percentage: float = 0.75) -> None:
+    def __init__(self, num_samples: int, simulation_args: SimulationArgs) -> None:
         self.enc = parse_encoded('enc.txt')
         self.dictionary: Set[str] = set(parse_dict('dict.txt'))
         freq_1_letter: Dict[str, float] = parse_letters_freq('Letter_Freq.txt')
         freq_2_letter: Dict[str, float] = parse_letters_freq('Letter2_Freq.txt')
 
+        self.__args: SimulationArgs = simulation_args
         self.__letters = list(sorted(freq_1_letter.keys()))
-        self.__fitness_goal: float = fitness_goal
+        self.__fitness_goal: float = simulation_args.fitness_goal
         self.__evolver: Evolver = Evolver(self.__letters)
-        self.__scheduler = Scheduler(mutation_percentage, decay=1e-3, min_val=0.05)
+        self.__scheduler = Scheduler(simulation_args.mutation.mutation_percentage, 
+                                     decay=simulation_args.mutation.mutation_decay, 
+                                     min_val=simulation_args.mutation.mutation_min_percentage)
         self.__num_samples = num_samples
-        self.__mutation_percentage = mutation_percentage
-        self.__elite_percentage = elite_percentage
+        self.__elite_percentile = simulation_args.elite_percentile
 
         self.__count_fitness_calls = 0
     
-    def __should_run(self, step: int, fitness_scores: List[float], fitness_goals: Dict[int, float] = None):
+    def __should_run(self, step: int, history: SimulationHistory, 
+                     fitness_scores: List[float], fitness_goals: Dict[int, float] = None):
         if fitness_goals:
             max_fitness = max(fitness_scores)
             for k, v in sorted(fitness_goals.items(), reverse=True):
                 if step >= k and max_fitness < v:
                     return False
+        
+        tolerance = self.__args.generation_tolerance
+        if step > tolerance and history.last_n_best_change(tolerance) < self.__args.generation_tolerance_percentage:
+            return False
 
         return all(fitness_score <= self.__fitness_goal for fitness_score in fitness_scores)
 
@@ -118,8 +144,8 @@ class Simulator:
             f.write(f'fitness score: {fitness_scores[i] * 100:.3f}{os.linesep}')
             f.write(f'fitness calls: {self.__count_fitness_calls}{os.linesep}')
             f.write(f'generations: {generations}{os.linesep}')
-            f.write(f'elite percentage: {self.__elite_percentage}{os.linesep}')
-            f.write(f'initial mutation rate: {self.__mutation_percentage}{os.linesep}')
+            f.write(f'elite percentage: {self.__elite_percentile}{os.linesep}')
+            f.write(f'initial mutation rate: {self.__args.mutation.mutation_percentage}{os.linesep}')
             f.write(f'minimum mutation rate: {self.__scheduler.min_val}{os.linesep}')
             f.write(f'mutation decay: {self.__scheduler.decay}{os.linesep}')
             f.write(f'letters: {self.__letters}{os.linesep}')
@@ -138,16 +164,16 @@ class Simulator:
 
     def __add_current_iteration_data(self, fitness_scores: List[float], 
                                      history: SimulationHistory):
-        worst = min(fitness_scores) * 100
-        average = statistics.mean(fitness_scores) * 100
-        best = max(fitness_scores) * 100
+        worst: float = min(fitness_scores) * 100
+        average: float = statistics.mean(fitness_scores) * 100
+        best: float = max(fitness_scores) * 100
         history.add(worst, average, best)
 
     def run(self, fitness_goals: Dict[int, float] = None):
         history: SimulationHistory = SimulationHistory()
         step = 0
 
-        plt.title(f'Initial mutation percentage: {self.__mutation_percentage * 100}%, elite selection: {self.__elite_percentage * 100}%')
+        plt.title(f'Initial mutation percentage: {self.__args.mutation.mutation_percentage * 100}%, elite percentile: {self.__elite_percentile * 100}%')
         
         # Generate initial population
         samples: List[Sample] = generate_random(self.__letters, self.__num_samples)
@@ -159,9 +185,9 @@ class Simulator:
         self.__add_current_iteration_data(fitness_scores, history)
         self.__plot_current(history)
 
-        while self.__should_run(step, fitness_scores, fitness_goals):
+        while self.__should_run(step, history, fitness_scores, fitness_goals):
             # Selection
-            elite_samples = Selector.select_elite(samples, fitness_scores, self.__elite_percentage)
+            elite_samples = Selector.select_elite(samples, fitness_scores, self.__elite_percentile)
             
             # Crossover
             samples = self.__generate_crossovers(samples, fitness_scores, self.__num_samples - len(elite_samples))
