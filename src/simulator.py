@@ -18,6 +18,34 @@ from src.scheduler import Scheduler
 OUTPUT_DIR_PATH = 'output'
 
 
+class SimulationHistory:
+    def __init__(self) -> None:
+        self.__worst = []
+        self.__average = []
+        self.__best = []
+
+    @property
+    def worst(self):
+        return self.__worst
+    
+    @property
+    def average(self):
+        return self.__average
+    
+    @property
+    def best(self):
+        return self.__best
+    
+    def add(self, worst, average, best) -> None:
+        self.__worst.append(worst)
+        self.__average.append(average)
+        self.__best.append(best)
+    
+    def last_n_best_change(self, n: int) -> float:
+        last_n = self.__best[-n:]
+        return sum(last_n) / statistics.mean(last_n)
+
+
 class Simulator:
     def __init__(self, num_samples: int, fitness_goal: float, mutation_percentage: float = 0.5, elite_percentage: float = 0.75) -> None:
         self.enc = parse_encoded('enc.txt')
@@ -44,10 +72,10 @@ class Simulator:
 
         return all(fitness_score <= self.__fitness_goal for fitness_score in fitness_scores)
 
-    def __plot_current(self, round_worst, round_average, round_best):
-        plt.plot(round_worst)
-        plt.plot(round_average)
-        plt.plot(round_best)
+    def __plot_current(self, history: SimulationHistory):
+        plt.plot(history.worst)
+        plt.plot(history.average)
+        plt.plot(history.best)
         plt.xlabel('Generation number')
         plt.ylabel('Fitness Score %')
         plt.draw()
@@ -109,17 +137,14 @@ class Simulator:
         return [check_words_in_dict_ratio(dec, self.dictionary) for dec in dec_words]
 
     def __add_current_iteration_data(self, fitness_scores: List[float], 
-                                     round_worst: List[float], round_average: List[float], 
-                                     round_best: List[float]):
-        round_worst.append(min(fitness_scores) * 100)
-        round_average.append(statistics.mean(fitness_scores) * 100)
-        round_best.append(max(fitness_scores) * 100)
+                                     history: SimulationHistory):
+        worst = min(fitness_scores) * 100
+        average = statistics.mean(fitness_scores) * 100
+        best = max(fitness_scores) * 100
+        history.add(worst, average, best)
 
     def run(self, fitness_goals: Dict[int, float] = None):
-        round_worst = []
-        round_average = []
-        round_best = []
-        # mutation_amount = int(self.__num_samples * self.__mutation_percentage)
+        history: SimulationHistory = SimulationHistory()
         step = 0
 
         plt.title(f'Initial mutation percentage: {self.__mutation_percentage * 100}%, elite selection: {self.__elite_percentage * 100}%')
@@ -131,8 +156,8 @@ class Simulator:
         dec, dec_words = self.__decode(samples)
         fitness_scores = self.__fitness(dec_words)
         
-        self.__add_current_iteration_data(fitness_scores, round_worst, round_average, round_best)
-        self.__plot_current(round_worst, round_average, round_best)
+        self.__add_current_iteration_data(fitness_scores, history)
+        self.__plot_current(history)
 
         while self.__should_run(step, fitness_scores, fitness_goals):
             # Selection
@@ -155,8 +180,8 @@ class Simulator:
             dec, dec_words = self.__decode(samples)
             fitness_scores = self.__fitness(dec_words)
             
-            self.__add_current_iteration_data(fitness_scores, round_worst, round_average, round_best)
-            self.__plot_current(round_worst, round_average, round_best)
+            self.__add_current_iteration_data(fitness_scores, history)
+            self.__plot_current(history)
 
             print(f'Best: {max(fitness_scores) * 100}%, Worst: {min(fitness_scores) * 100}%, Mean: {statistics.mean(fitness_scores) * 100}%')
             self.__count_fitness_calls += len(dec_words)
