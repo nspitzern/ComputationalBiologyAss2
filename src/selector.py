@@ -17,7 +17,7 @@ class Selector:
         :return:
         """
         # Calculate starting index from which to select
-        start_index = floor(len(fitness_scores) - percentile * len(fitness_scores))
+        start_index = floor(percentile * len(fitness_scores))
 
         # Sort the samples by fitness
         sorted_samples, fitness_scores = zip(*sorted(zip(samples, fitness_scores), key=lambda x: x[1]))
