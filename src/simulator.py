@@ -64,6 +64,9 @@ class SimulationHistory:
         last_n = self.__best[-n:]
         return max(last_n) - min(last_n)
 
+    def __len__(self):
+        return len(self.__average)
+
 
 class Simulator:
     def __init__(self, num_samples: int, simulation_args: SimulationArgs) -> None:
@@ -217,31 +220,23 @@ class Simulator:
 
             step += 1
 
-        self.__save(samples, dec, fitness_scores, step)
         plt.cla()
+        return fitness_scores, samples, history
 
-    def run_multiple(self, num_runs):
-        best_results = dict()
-
-        for i in range(num_runs):
-            fitnesses, samples = self.run()
-
-            best_results[i] = {
-                'fitness': fitnesses,
-                'samples': samples
-            }
-
-        best_fitness = 0
-        best_samples = None
+    def run_multiple(self, num_runs, **kwargs):
+        best_fitness = [0]
+        best_samples = []
+        best_history = SimulationHistory()
 
         for i in range(num_runs):
-            fitnesses = best_results[i]['fitness']
+            fitnesses, samples, history = self.run(**kwargs)
 
-            if max(fitnesses) >= best_fitness:
+            if max(fitnesses) > max(best_fitness):
                 best_fitness = fitnesses
-                best_samples = best_results[i]['samples']
+                best_samples = samples
+                best_history = history
 
         dec, dec_words = self.__decode(best_samples)
 
-        self.__save(best_samples, dec, best_fitness, len(best_fitness))
-
+        self.__plot_current(best_history)
+        self.__save(best_samples, dec, best_fitness, len(best_history))
