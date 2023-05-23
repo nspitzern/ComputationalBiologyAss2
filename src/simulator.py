@@ -162,8 +162,8 @@ class Simulator:
         dec_words = [d.strip().translate(str.maketrans('', '', punctuation)).split(' ') for d in dec]
         return dec, dec_words
     
-    def __fitness(self, dec_words: List[List[str]]) -> List[float]:
-        return [check_words_in_dict_ratio(dec, self.dictionary) for dec in dec_words]
+    def __fitness(self, dec_words: List[List[str]]) -> Tuple[int, List[float]]:
+        return len(dec_words), [check_words_in_dict_ratio(dec, self.dictionary) for dec in dec_words]
 
     def __add_current_iteration_data(self, fitness_scores: List[float], 
                                      history: SimulationHistory):
@@ -171,6 +171,32 @@ class Simulator:
         average: float = statistics.mean(fitness_scores) * 100
         best: float = max(fitness_scores) * 100
         history.add(worst, average, best)
+
+    def __step(self, step: int, samples: List[Sample], fitness_scores: List[float]):
+        # Selection
+        elite_samples = Selector.select_elite(samples, fitness_scores, self.__elite_percentile)
+        
+        # Crossover
+        samples = self.__generate_crossovers(samples, fitness_scores, self.__num_samples - len(elite_samples))
+        samples.extend(elite_samples)
+        
+        # Mutation
+        mutation_prob = self.__scheduler.calculate(step)
+        mutation_amount = int(self.__num_samples * mutation_prob)
+
+        for i in Selector.choose_n_random(samples, mutation_amount):
+            s = samples[i]
+            _, c1, c2 = self.__evolver.mutate(s.dec_map)
+            s.swap(c1, c2)
+        
+        # Compute fitness
+        dec, dec_words = self.__decode(samples)
+        fitness_calls, fitness_scores = self.__fitness(dec_words)
+        self.__count_fitness_calls += fitness_calls
+
+        print(f'Current Mutation rate: {mutation_prob}')
+
+        return samples, fitness_scores
 
     def run(self, fitness_goals: Dict[int, float] = None):
         history: SimulationHistory = SimulationHistory()
@@ -183,40 +209,21 @@ class Simulator:
         
         # Compute fitness
         dec, dec_words = self.__decode(samples)
-        fitness_scores = self.__fitness(dec_words)
+        fitness_calls, fitness_scores = self.__fitness(dec_words)
+        self.__count_fitness_calls += fitness_calls
         
         self.__add_current_iteration_data(fitness_scores, history)
         self.__plot_current(history)
 
         while self.__should_run(step, history, fitness_scores, fitness_goals):
-            # Selection
-            elite_samples = Selector.select_elite(samples, fitness_scores, self.__elite_percentile)
-            
-            # Crossover
-            samples = self.__generate_crossovers(samples, fitness_scores, self.__num_samples - len(elite_samples))
-            samples.extend(elite_samples)
-            
-            # Mutation
-            mutation_prob = self.__scheduler.calculate(step)
-            mutation_amount = int(self.__num_samples * mutation_prob)
-
-            for i in Selector.choose_n_random(samples, mutation_amount):
-                s = samples[i]
-                _, c1, c2 = self.__evolver.mutate(s.dec_map)
-                s.swap(c1, c2)
-            
-            # Compute fitness
-            dec, dec_words = self.__decode(samples)
-            fitness_scores = self.__fitness(dec_words)
+            samples, fitness_scores = self.__step(step, samples, fitness_scores)
             
             self.__add_current_iteration_data(fitness_scores, history)
             self.__plot_current(history)
 
             print(f'Best: {max(fitness_scores) * 100}%, Worst: {min(fitness_scores) * 100}%, Mean: {statistics.mean(fitness_scores) * 100}%')
-            self.__count_fitness_calls += len(dec_words)
             print(f'fitness calls: {self.__count_fitness_calls}')
             print(f'generation: {step}')
-            print(f'Current Mutation rate: {mutation_prob}')
 
             step += 1
 
