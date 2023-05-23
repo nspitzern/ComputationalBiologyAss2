@@ -236,6 +236,9 @@ class Simulator:
                 best_samples = samples
                 best_history = history
 
+                if max(best_fitness) >= self.__fitness_goal:
+                    break
+
         dec, dec_words = self.__decode(best_samples)
 
         self.__plot_current(best_history)
