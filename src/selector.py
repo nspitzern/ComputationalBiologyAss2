@@ -24,9 +24,9 @@ class Selector:
         return sorted_samples[start_index:]
 
     @staticmethod
-    def choose_n_random(arr: List, n: int):
+    def choose_n_random(arr: List, n: int) -> List[int]:
         return sample(range(len(arr)), n)
     
     @staticmethod
-    def choose_n_weighted_random(arr: List, weights: List[float], n: int):
+    def choose_n_weighted_random(arr: List, weights: List[float], n: int) -> List[Sample]:
         return choices(arr, weights, k=n)
