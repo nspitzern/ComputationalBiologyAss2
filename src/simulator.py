@@ -2,17 +2,15 @@ import os
 import statistics
 import numpy as np
 import matplotlib.pyplot as plt
-from string import punctuation
-from typing import Dict, List, Set, Tuple
+from typing import Dict, List, Set
 from datetime import datetime
 from src.evolver import Evolver
 from src.files_parser import parse_dict, parse_encoded, parse_letters_freq
 from src.generator import generate_random
 from src.sample import Sample
 from src.selector import Selector
-from src.decoder import Decoder
-from src.fitness import check_words_in_dict_ratio
 from src.scheduler import Scheduler
+from src.strategy import GeneticAlgorithmType
 
 
 OUTPUT_DIR_PATH = 'output'
@@ -69,13 +67,14 @@ class SimulationHistory:
 
 
 class Simulator:
-    def __init__(self, num_samples: int, simulation_args: SimulationArgs) -> None:
+    def __init__(self, algo_type: GeneticAlgorithmType, num_samples: int, simulation_args: SimulationArgs) -> None:
         self.enc = parse_encoded('enc.txt')
         self.dictionary: Set[str] = set(parse_dict('dict.txt'))
         freq_1_letter: Dict[str, float] = parse_letters_freq('Letter_Freq.txt')
         freq_2_letter: Dict[str, float] = parse_letters_freq('Letter2_Freq.txt')
 
         self.__args: SimulationArgs = simulation_args
+        self.__strategy = GeneticAlgorithmType.get_strategy(algo_type, self.dictionary, self.enc)
         self.__letters = list(sorted(freq_1_letter.keys()))
         self.__fitness_goal: float = simulation_args.fitness_goal
         self.__evolver: Evolver = Evolver(self.__letters)
@@ -99,6 +98,7 @@ class Simulator:
         if step > tolerance and history.last_n_best_change(tolerance) < self.__args.generation_tolerance_percentage:
             return False
 
+        # TODO: check if min <= self.__fitness_goal will be faster
         return all(fitness_score <= self.__fitness_goal for fitness_score in fitness_scores)
 
     def __plot_current(self, history: SimulationHistory):
@@ -157,14 +157,6 @@ class Simulator:
 
         plt.savefig(os.path.join(OUTPUT_DIR_PATH, f'plot_{datetime.now().strftime("%Y-%m-%d_%H-%M-%S")}.png'), format='png')
 
-    def __decode(self, samples: List[Sample]) -> Tuple[List[str], List[List[str]]]:
-        dec = [Decoder.decode_words(self.enc, s.dec_map_int) for s in samples]
-        dec_words = [d.strip().translate(str.maketrans('', '', punctuation)).split(' ') for d in dec]
-        return dec, dec_words
-    
-    def __fitness(self, dec_words: List[List[str]]) -> Tuple[int, List[float]]:
-        return len(dec_words), [check_words_in_dict_ratio(dec, self.dictionary) for dec in dec_words]
-
     def __add_current_iteration_data(self, fitness_scores: List[float], 
                                      history: SimulationHistory):
         worst: float = min(fitness_scores) * 100
@@ -190,8 +182,7 @@ class Simulator:
             s.swap(c1, c2)
         
         # Compute fitness
-        dec, dec_words = self.__decode(samples)
-        fitness_calls, fitness_scores = self.__fitness(dec_words)
+        fitness_calls, fitness_scores = self.__strategy.fitness(samples)
         self.__count_fitness_calls += fitness_calls
 
         print(f'Current Mutation rate: {mutation_prob}')
@@ -208,15 +199,15 @@ class Simulator:
         samples: List[Sample] = generate_random(self.__letters, self.__num_samples)
         
         # Compute fitness
-        dec, dec_words = self.__decode(samples)
-        fitness_calls, fitness_scores = self.__fitness(dec_words)
+        fitness_calls, fitness_scores = self.__strategy.fitness(samples)
         self.__count_fitness_calls += fitness_calls
         
         self.__add_current_iteration_data(fitness_scores, history)
         self.__plot_current(history)
 
         while self.__should_run(step, history, fitness_scores, fitness_goals):
-            samples, fitness_scores = self.__step(step, samples, fitness_scores)
+            step_func = lambda s, f: self.__step(step, s, f)
+            samples, fitness_scores = self.__strategy.activate(step_func, samples, fitness_scores)
             
             self.__add_current_iteration_data(fitness_scores, history)
             self.__plot_current(history)
@@ -246,7 +237,7 @@ class Simulator:
                 if max(best_fitness) >= self.__fitness_goal:
                     break
 
-        dec, dec_words = self.__decode(best_samples)
+        dec, dec_words = self.__strategy.decode(best_samples)
 
         self.__plot_current(best_history)
         self.__save(best_samples, dec, best_fitness, len(best_history))
