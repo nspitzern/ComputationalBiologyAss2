@@ -74,13 +74,13 @@ class Simulator:
         freq_2_letter: Dict[str, float] = parse_letters_freq('Letter2_Freq.txt')
 
         self.__args: SimulationArgs = simulation_args
-        self.__strategy = GeneticAlgorithmType.get_strategy(algo_type, self.dictionary, self.enc)
         self.__letters = list(sorted(freq_1_letter.keys()))
         self.__fitness_goal: float = simulation_args.fitness_goal
         self.__evolver: Evolver = Evolver(self.__letters)
         self.__scheduler = Scheduler(simulation_args.mutation.mutation_percentage, 
                                      decay=simulation_args.mutation.mutation_decay, 
                                      min_val=simulation_args.mutation.mutation_min_percentage)
+        self.__strategy = GeneticAlgorithmType.get_strategy(algo_type, self.dictionary, self.enc, self.__letters, freq_1_letter)
         self.__num_samples = num_samples
         self.__elite_percentile = simulation_args.elite_percentile
 

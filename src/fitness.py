@@ -51,17 +51,17 @@ def get_let_freq(dec: str):
     return { k: v / counter.total() for k, v in counter.items() }
 
 
-def letters_freq_ratio(dec_letters_freq: Dict[str, float], corpus_letters_freq, measurement_func: Callable) -> float:
-    freqs = [(dec_letters_freq[c], corpus_letters_freq[c]) for c in corpus_letters_freq.keys()]
-
-    return measurement_func(freqs)
-
-
-# def letters_freq_ratio(dec: str, corpus_letters_freq, measurement_func: Callable) -> float:
-#     dec_letters_freq = get_let_freq(dec)
-#     freqs = [(dec_letters_freq.get(c, 0), corpus_letters_freq[c]) for c in corpus_letters_freq.keys()]
+# def letters_freq_ratio(dec_letters_freq: Dict[str, float], corpus_letters_freq, measurement_func: Callable) -> float:
+#     freqs = [(dec_letters_freq[c], corpus_letters_freq[c]) for c in corpus_letters_freq.keys()]
 
 #     return measurement_func(freqs)
+
+
+def letters_freq_ratio(dec: str, corpus_letters_freq: Dict[str, float], measurement_func: Callable) -> float:
+    dec_letters_freq = get_let_freq(dec)
+    freqs = [(dec_letters_freq.get(c, 0), corpus_letters_freq[c]) for c in corpus_letters_freq.keys()]
+
+    return measurement_func(freqs)
 
 
 def MSE(freqs: List[Tuple[float, float]], rooted: bool = False) -> float:
