@@ -17,7 +17,7 @@ class GeneticAlgorithmType(IntEnum):
     def get_strategy(strategy: int, dictionary: Set[str], enc: str, enc_letters: List[str], single_let_freq: Dict[str, float]):
         if strategy == 1:
             return DarwinStrategy(dictionary, enc, enc_letters, single_let_freq)
-        if strategy == 1:
+        if strategy == 2:
             return LamarkStrategy(dictionary, enc, enc_letters, single_let_freq)
         return RegularStrategy(dictionary, enc, enc_letters, single_let_freq)
 
