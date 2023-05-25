@@ -80,6 +80,7 @@ class Simulator:
         self.__scheduler = Scheduler(simulation_args.mutation.mutation_percentage, 
                                      decay=simulation_args.mutation.mutation_decay, 
                                      min_val=simulation_args.mutation.mutation_min_percentage)
+        self.algo_type = algo_type
         self.__strategy = GeneticAlgorithmType.get_strategy(algo_type, self.dictionary, self.enc, self.__letters, freq_1_letter)
         self.__num_samples = num_samples
         self.__elite_percentile = simulation_args.elite_percentile
@@ -132,7 +133,7 @@ class Simulator:
 
         return new_samples
 
-    def __save(self, samples: List[Sample], dec: List[str], fitness_scores: List[float], generations: int) -> None:
+    def __save(self, samples: List[Sample], dec: List[str], fitness_scores: List[float], generations: int, run_num: int = 0) -> None:
         i = np.argmax(fitness_scores)
         best = samples[i]
 
@@ -141,6 +142,8 @@ class Simulator:
 
         filename = os.path.join(OUTPUT_DIR_PATH, f'dec_{datetime.now().strftime("%Y-%m-%d_%H-%M-%S")}.txt')
         with open(filename, '+wt', encoding='utf-8') as f:
+            f.write(f'run number: {run_num}{os.linesep}')
+            f.write(f'strategy: {self.algo_type}{os.linesep}')
             f.write(f'sample size: {self.__num_samples}{os.linesep}')
             f.write(f'fitness score: {fitness_scores[i] * 100:.3f}{os.linesep}')
             f.write(f'fitness calls: {self.__strategy.fitness_calls}{os.linesep}')
@@ -236,4 +239,4 @@ class Simulator:
         dec, dec_words = self.__strategy.decode(best_samples)
 
         self.__plot_current(best_history)
-        self.__save(best_samples, dec, best_fitness, len(best_history))
+        self.__save(best_samples, dec, best_fitness, len(best_history), run_num=i)
