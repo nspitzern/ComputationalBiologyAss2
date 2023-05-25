@@ -71,7 +71,7 @@ class RegularStrategy(BaseStrategy):
     def __init__(self, dictionary: Set[str], enc: str, enc_letters: List[str], single_let_freq: Dict[str, float]) -> None:
         super().__init__(dictionary, enc, enc_letters, single_let_freq)
 
-    def activate(self, step_func: Callable[[Tuple[List[Sample], List[float]]], Tuple[List[Sample], List[float]]], samples: List[Sample], fitness_scores: List[float]) -> Tuple[List[Sample], List[float]]:
+    def activate(self, step_func: Callable[[List[Sample], List[float]], Tuple[List[Sample], List[float]]], samples: List[Sample], fitness_scores: List[float]) -> Tuple[List[Sample], List[float]]:
         return step_func(samples, fitness_scores)
 
 
@@ -79,9 +79,9 @@ class DarwinStrategy(BaseStrategy):
     def __init__(self, dictionary: Set[str], enc: str, enc_letters: List[str], single_let_freq: Dict[str, float]) -> None:
         super().__init__(dictionary, enc, enc_letters, single_let_freq)
 
-    def activate(self, step_func: Callable[[Tuple[List[Sample], List[float]]], Tuple[List[Sample], List[float]]], samples: List[Sample], fitness_scores: List[float]) -> Tuple[List[Sample], List[float]]:
+    def activate(self, step_func: Callable[[List[Sample], List[float]], Tuple[List[Sample], List[float]]], samples: List[Sample], fitness_scores: List[float]) -> Tuple[List[Sample], List[float]]:
         optimized_samples = self.optimize(samples, fitness_scores)
-        optimized_fitness = self.fitness(optimized_samples)[1]
+        _, optimized_fitness = self.fitness(optimized_samples)
         samples, fitness_scores = step_func(samples, optimized_fitness)
         return samples, fitness_scores
 
@@ -90,8 +90,8 @@ class LamarkStrategy(BaseStrategy):
     def __init__(self, dictionary: Set[str], enc: str, enc_letters: List[str], single_let_freq: Dict[str, float]) -> None:
         super().__init__(dictionary, enc, enc_letters, single_let_freq)
 
-    def activate(self, step_func: Callable[[Tuple[List[Sample], List[float]]], Tuple[List[Sample], List[float]]], samples: List[Sample], fitness_scores: List[float]) -> Tuple[List[Sample], List[float]]:
+    def activate(self, step_func: Callable[[List[Sample], List[float]], Tuple[List[Sample], List[float]]], samples: List[Sample], fitness_scores: List[float]) -> Tuple[List[Sample], List[float]]:
         optimized_samples = self.optimize(samples, fitness_scores)
-        optimized_fitness = self.fitness(optimized_samples)[1]
+        _, optimized_fitness = self.fitness(optimized_samples)
         samples, fitness_scores = step_func(optimized_samples, optimized_fitness)
         return samples, fitness_scores
