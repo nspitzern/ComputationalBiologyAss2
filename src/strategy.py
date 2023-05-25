@@ -28,6 +28,7 @@ class BaseStrategy:
         self.__dictionary = dictionary
         self.__single_let_freq = single_let_freq
         self.__evolver: Evolver = Evolver(enc_letters)
+        self.fitness_calls = 0
 
     def decode(self, samples: List[Sample]) -> Tuple[List[str], List[List[str]]]:
         dec = [Decoder.decode_words(self.__enc, s.dec_map_int).strip().translate(str.maketrans('', '', f'{punctuation}\n\r')) for s in samples]
@@ -36,10 +37,11 @@ class BaseStrategy:
 
 
     def fitness(self, samples: List[Sample]) -> Tuple[int, List[float]]:
+        self.fitness_calls += len(samples)
         decs, dec_words = self.decode(samples)
         fitness_scores = [check_words_in_dict_ratio(dec, self.__dictionary) for dec in dec_words]
         # freq_measure = [letters_freq_ratio(dec, self.__single_let_freq, MSE) for dec in decs]
-        return len(dec_words), fitness_scores
+        return fitness_scores
     
 
     def optimize(self, samples: List[Sample], fitness_scores: List[float]) -> List[Sample]:

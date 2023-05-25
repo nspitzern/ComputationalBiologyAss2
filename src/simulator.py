@@ -84,8 +84,6 @@ class Simulator:
         self.__num_samples = num_samples
         self.__elite_percentile = simulation_args.elite_percentile
 
-        self.__count_fitness_calls = 0
-    
     def __should_run(self, step: int, history: SimulationHistory, 
                      fitness_scores: List[float], fitness_goals: Dict[int, float] = None):
         if fitness_goals:
@@ -145,7 +143,7 @@ class Simulator:
         with open(filename, '+wt', encoding='utf-8') as f:
             f.write(f'sample size: {self.__num_samples}{os.linesep}')
             f.write(f'fitness score: {fitness_scores[i] * 100:.3f}{os.linesep}')
-            f.write(f'fitness calls: {self.__count_fitness_calls}{os.linesep}')
+            f.write(f'fitness calls: {self.__strategy.fitness_calls}{os.linesep}')
             f.write(f'generations: {generations}{os.linesep}')
             f.write(f'elite percentage: {self.__elite_percentile}{os.linesep}')
             f.write(f'initial mutation rate: {self.__args.mutation.mutation_percentage}{os.linesep}')
@@ -182,8 +180,7 @@ class Simulator:
             s.swap(c1, c2)
         
         # Compute fitness
-        fitness_calls, fitness_scores = self.__strategy.fitness(samples)
-        self.__count_fitness_calls += fitness_calls
+        fitness_scores = self.__strategy.fitness(samples)
 
         print(f'Current Mutation rate: {mutation_prob}')
 
@@ -199,8 +196,7 @@ class Simulator:
         samples: List[Sample] = generate_random(self.__letters, self.__num_samples)
         
         # Compute fitness
-        fitness_calls, fitness_scores = self.__strategy.fitness(samples)
-        self.__count_fitness_calls += fitness_calls
+        fitness_scores = self.__strategy.fitness(samples)
         
         self.__add_current_iteration_data(fitness_scores, history)
         self.__plot_current(history)
@@ -213,7 +209,7 @@ class Simulator:
             self.__plot_current(history)
 
             print(f'Best: {max(fitness_scores) * 100}%, Worst: {min(fitness_scores) * 100}%, Mean: {statistics.mean(fitness_scores) * 100}%')
-            print(f'fitness calls: {self.__count_fitness_calls}')
+            print(f'fitness calls: {self.__strategy.fitness_calls}')
             print(f'generation: {step}')
 
             step += 1
