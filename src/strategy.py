@@ -53,7 +53,7 @@ class BaseStrategy:
             temp: Sample = copy.deepcopy(s)
             for _ in range(50):
                 mutation, c1, c2 = self.__evolver.mutate(temp.dec_map)
-                new_fitness = self.fitness([Sample(mutation)])[1][0]
+                new_fitness = self.fitness([Sample(mutation)])[0]
 
                 if new_fitness == 1:
                     break
@@ -83,7 +83,7 @@ class DarwinStrategy(BaseStrategy):
 
     def activate(self, step_func: Callable[[List[Sample], List[float]], Tuple[List[Sample], List[float]]], samples: List[Sample], fitness_scores: List[float]) -> Tuple[List[Sample], List[float]]:
         optimized_samples = self.optimize(samples, fitness_scores)
-        _, optimized_fitness = self.fitness(optimized_samples)
+        optimized_fitness = self.fitness(optimized_samples)
         samples, fitness_scores = step_func(samples, optimized_fitness)
         return samples, fitness_scores
 
@@ -94,6 +94,6 @@ class LamarkStrategy(BaseStrategy):
 
     def activate(self, step_func: Callable[[List[Sample], List[float]], Tuple[List[Sample], List[float]]], samples: List[Sample], fitness_scores: List[float]) -> Tuple[List[Sample], List[float]]:
         optimized_samples = self.optimize(samples, fitness_scores)
-        _, optimized_fitness = self.fitness(optimized_samples)
+        optimized_fitness = self.fitness(optimized_samples)
         samples, fitness_scores = step_func(optimized_samples, optimized_fitness)
         return samples, fitness_scores
