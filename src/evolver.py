@@ -1,5 +1,6 @@
 from typing import Dict, List, Tuple
-from random import randint
+from random import randint, shuffle
+from copy import deepcopy
 
 from src.generator import is_valid
 from src.sample import Sample
@@ -13,7 +14,7 @@ class Evolver:
         self.__crossover_max_thresh = self.__length - 1 #2 * self.__crossover_min_thresh
         self.__enc_letters = enc_letters
 
-    def mutate(self, dec_map: Dict[str, str]) -> Tuple[str, str, str]:
+    def swap_mutation(self, dec_map: Dict[str, str]) -> Tuple[str, List[Tuple[str, str]]]:
         keys = list(dec_map.keys())
         values = list(dec_map.values())
 
@@ -25,7 +26,25 @@ class Evolver:
         target_letters: List[str] = list(values[:])
         target_letters[i], target_letters[j] = values[j], values[i]
         
-        return ''.join(target_letters), c1, c2
+        return ''.join(target_letters), [(c1, c2)]
+
+    def scramble_mutation(self, dec_map: Dict[str, str]) -> Tuple[str, List[Tuple[str, str]]]:
+        keys = list(dec_map.keys())
+        values = list(dec_map.values())
+
+        i, j = Selector.choose_n_random(keys, 2)
+        i, j = min(i, j), max(i, j)
+
+        sub = values[i: j]
+        shuffle(sub)
+        new_values = deepcopy(values)
+        new_values[i: j] = sub
+
+        swaps = []
+        for idx in range(i, j):
+            swaps.append((values[idx], new_values[idx]))
+
+        return ''.join(values), swaps
 
     def one_point_crossover(self, s1: str, s2: str) -> Tuple[str, str]:
         i = randint(self.__crossover_min_thresh, self.__crossover_max_thresh)
