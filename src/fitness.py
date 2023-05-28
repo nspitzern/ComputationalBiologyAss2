@@ -1,3 +1,4 @@
+import numpy as np
 from typing import List, Dict, Callable, Set, Tuple
 from collections import Counter
 
@@ -59,9 +60,10 @@ def get_let_freq(dec: str):
 
 def letters_freq_ratio(dec: str, corpus_letters_freq: Dict[str, float], measurement_func: Callable) -> float:
     dec_letters_freq = get_let_freq(dec)
-    freqs = [(dec_letters_freq.get(c, 0), corpus_letters_freq[c]) for c in corpus_letters_freq.keys()]
+    freq1 = [dec_letters_freq.get(c, 0) for c in corpus_letters_freq.keys()]
+    freq2 = [corpus_letters_freq[c] for c in corpus_letters_freq.keys()]
 
-    return measurement_func(freqs)
+    return measurement_func(freq1, freq2)
 
 
 def MSE(freqs: List[Tuple[float, float]], rooted: bool = False) -> float:
@@ -75,5 +77,12 @@ def MSE(freqs: List[Tuple[float, float]], rooted: bool = False) -> float:
             val = val ** 0.5
 
         res += val
+
+    return res / n_freqs
+
+def NMSE(freq1: List[float], freq2: List[float]) -> float:
+    n_freqs = len(freq1)
+    res = sum([(dec_freq - corpus_freq) ** 2 for dec_freq, corpus_freq in zip(freq1, freq2)])
+    res /= np.var(freq2)
 
     return res / n_freqs

@@ -19,7 +19,7 @@ class Decoder:
     #     return ''.join([dec_map.get(c, c) for c in enc])
     
     @staticmethod
-    def decode_words(enc: str, dec_map: Dict[str, str]) -> str:
+    def decode_words(enc: str, dec_map: Dict[int, int]) -> str:
         return enc.translate(dec_map)
 
     # @staticmethod

@@ -4,6 +4,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 from typing import Dict, List, Set
 from datetime import datetime
+from src.memory import Memory
+from src.decoder import Decoder
 from src.evolver import Evolver
 from src.files_parser import parse_dict, parse_encoded, parse_letters_freq
 from src.generator import generate_random
@@ -80,6 +82,7 @@ class Simulator:
         self.__scheduler = Scheduler(simulation_args.mutation.mutation_percentage, 
                                      decay=simulation_args.mutation.mutation_decay, 
                                      min_val=simulation_args.mutation.mutation_min_percentage)
+        self.__memory = Memory()
         self.algo_type = algo_type
         self.__strategy = GeneticAlgorithmType.get_strategy(algo_type, self.dictionary, self.enc, self.__letters, freq_1_letter)
         self.__num_samples = num_samples
@@ -97,8 +100,7 @@ class Simulator:
         if step > tolerance and history.last_n_best_change(tolerance) < self.__args.generation_tolerance_percentage:
             return False
 
-        # TODO: check if min <= self.__fitness_goal will be faster
-        return all(fitness_score <= self.__fitness_goal for fitness_score in fitness_scores)
+        return max(fitness_scores) < self.__fitness_goal
 
     def __plot_current(self, history: SimulationHistory):
         plt.plot(history.worst)
@@ -127,7 +129,9 @@ class Simulator:
             co = self.__evolver.generate_pmx_crossover(samples, fitness_scores)
 
             for o in co:
-                new_samples.append(Sample(self.__letters, decode_letters=o))
+                if o not in self.__memory:
+                    new_samples.append(Sample(self.__letters, decode_letters=o))
+                    self.__memory.add(o)
 
             samples_len += len(co)
 
@@ -143,7 +147,7 @@ class Simulator:
         filename = os.path.join(OUTPUT_DIR_PATH, f'dec_{datetime.now().strftime("%Y-%m-%d_%H-%M-%S")}.txt')
         with open(filename, '+wt', encoding='utf-8') as f:
             f.write(f'run number: {run_num}{os.linesep}')
-            f.write(f'strategy: {self.algo_type}{os.linesep}')
+            f.write(f'strategy: {GeneticAlgorithmType.map_to_str(self.algo_type)}{os.linesep}')
             f.write(f'sample size: {self.__num_samples}{os.linesep}')
             f.write(f'fitness score: {fitness_scores[i] * 100:.3f}{os.linesep}')
             f.write(f'fitness calls: {self.__strategy.fitness_calls}{os.linesep}')
@@ -154,7 +158,7 @@ class Simulator:
             f.write(f'mutation decay: {self.__scheduler.decay}{os.linesep}')
             f.write(f'letters: {self.__letters}{os.linesep}')
             f.write(f'dec: {best.decode_letters}{os.linesep}')
-            f.writelines(dec[i])
+            f.writelines(Decoder.decode_words(self.enc, best.dec_map_int))
 
         plt.savefig(os.path.join(OUTPUT_DIR_PATH, f'plot_{datetime.now().strftime("%Y-%m-%d_%H-%M-%S")}.png'), format='png')
 
@@ -179,8 +183,10 @@ class Simulator:
 
         for i in Selector.choose_n_random(samples, mutation_amount):
             s = samples[i]
-            _, c1, c2 = self.__evolver.mutate(s.dec_map)
-            s.swap(c1, c2)
+            mutation, c1, c2 = self.__evolver.mutate(s.dec_map)
+            if mutation not in self.__memory:
+                s.swap(c1, c2)
+                self.__memory.add(mutation)
         
         # Compute fitness
         fitness_scores = self.__strategy.fitness(samples)

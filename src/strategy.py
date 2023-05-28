@@ -3,7 +3,7 @@ from enum import IntEnum
 from string import punctuation
 from typing import Callable, Dict, List, Set, Tuple
 from src.evolver import Evolver
-from src.fitness import MSE, check_words_in_dict_ratio, letters_freq_ratio
+from src.fitness import MSE, NMSE, check_words_in_dict_ratio, letters_freq_ratio
 from src.decoder import Decoder
 from src.sample import Sample
 
@@ -20,6 +20,16 @@ class GeneticAlgorithmType(IntEnum):
         if strategy == 2:
             return LamarkStrategy(dictionary, enc, enc_letters, single_let_freq)
         return RegularStrategy(dictionary, enc, enc_letters, single_let_freq)
+
+    @staticmethod
+    def map_to_str(strategy: int) -> str:
+        m = {
+            GeneticAlgorithmType.REGULAR: 'REGULAR',
+            GeneticAlgorithmType.DARWIN: 'DARWIN',
+            GeneticAlgorithmType.LAMARK: 'LAMARK',
+        }
+
+        return m.get(strategy, '')
 
 
 class BaseStrategy:
@@ -40,7 +50,7 @@ class BaseStrategy:
         self.fitness_calls += len(samples)
         decs, dec_words = self.decode(samples)
         fitness_scores = [check_words_in_dict_ratio(dec, self.__dictionary) for dec in dec_words]
-        # freq_measure = [letters_freq_ratio(dec, self.__single_let_freq, MSE) for dec in decs]
+        # freq_measure = [letters_freq_ratio(dec, self.__single_let_freq, NMSE) for dec in decs]
         return fitness_scores
     
 
