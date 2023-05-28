@@ -4,6 +4,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 from typing import Dict, List, Set
 from datetime import datetime
+
+from src.fitness import check_words_in_dict_ratio
 from src.memory import Memory
 from src.decoder import Decoder
 from src.evolver import Evolver
@@ -84,7 +86,7 @@ class Simulator:
                                      min_val=simulation_args.mutation.mutation_min_percentage)
         self.__memory = Memory()
         self.algo_type = algo_type
-        self.__strategy = GeneticAlgorithmType.get_strategy(algo_type, self.dictionary, self.enc, self.__letters, freq_1_letter)
+        self.__strategy = GeneticAlgorithmType.get_strategy(algo_type, self.dictionary, self.enc, self.__letters, freq_1_letter, freq_2_letter)
         self.__num_samples = num_samples
         self.__elite_percentile = simulation_args.elite_percentile
 
@@ -95,7 +97,7 @@ class Simulator:
             for k, v in sorted(fitness_goals.items(), reverse=True):
                 if step >= k and max_fitness < v:
                     return False
-        
+
         tolerance = self.__args.generation_tolerance
         if step > tolerance and history.last_n_best_change(tolerance) < self.__args.generation_tolerance_percentage:
             return False
@@ -146,7 +148,7 @@ class Simulator:
 
         filename = os.path.join(OUTPUT_DIR_PATH, f'dec_{datetime.now().strftime("%Y-%m-%d_%H-%M-%S")}.txt')
         with open(filename, '+wt', encoding='utf-8') as f:
-            f.write(f'run number: {run_num}{os.linesep}')
+            f.write(f'run number: {run_num + 1}{os.linesep}')
             f.write(f'strategy: {GeneticAlgorithmType.map_to_str(self.algo_type)}{os.linesep}')
             f.write(f'sample size: {self.__num_samples}{os.linesep}')
             f.write(f'fitness score: {fitness_scores[i] * 100:.3f}{os.linesep}')
@@ -175,7 +177,6 @@ class Simulator:
         
         # Crossover
         samples = self.__generate_crossovers(samples, fitness_scores, self.__num_samples - len(elite_samples))
-        samples.extend(elite_samples)
         
         # Mutation
         mutation_prob = self.__scheduler.calculate(step)
@@ -183,11 +184,14 @@ class Simulator:
 
         for i in Selector.choose_n_random(samples, mutation_amount):
             s = samples[i]
-            mutation, c1, c2 = self.__evolver.mutate(s.dec_map)
+            # mutation, c1, c2 = self.__evolver.scramble_mutation(s.dec_map)
+            mutation, swaps = self.__evolver.swap_mutation(s.dec_map)
             if mutation not in self.__memory:
-                s.swap(c1, c2)
+                # s.swap(c1, c2)
+                s.swap(swaps)
                 self.__memory.add(mutation)
-        
+
+        samples.extend(elite_samples)
         # Compute fitness
         fitness_scores = self.__strategy.fitness(samples)
 
@@ -243,6 +247,7 @@ class Simulator:
                     break
 
         dec, dec_words = self.__strategy.decode(best_samples)
+        print(f'Best Words Fitness: {100 * max([check_words_in_dict_ratio(dec, self.dictionary) for dec in dec_words])}%')
 
         self.__plot_current(best_history)
         self.__save(best_samples, dec, best_fitness, len(best_history), run_num=i)
