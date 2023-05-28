@@ -3,7 +3,7 @@ from enum import IntEnum
 from string import punctuation
 from typing import Callable, Dict, List, Set, Tuple
 from src.evolver import Evolver
-from src.fitness import MSE, NMSE, check_words_in_dict_ratio, letters_freq_ratio
+from src.fitness import MSE, NMSE, abs_diff, minus_freq_diff, check_words_in_dict_ratio, letters_freq_ratio, word_correctness_by_len
 from src.decoder import Decoder
 from src.sample import Sample
 
@@ -14,12 +14,12 @@ class GeneticAlgorithmType(IntEnum):
     LAMARK = 2
 
     @staticmethod
-    def get_strategy(strategy: int, dictionary: Set[str], enc: str, enc_letters: List[str], single_let_freq: Dict[str, float]):
+    def get_strategy(strategy: int, dictionary: Set[str], enc: str, enc_letters: List[str], unigram_freq: Dict[str, float], bigram_freq: Dict[str, float]):
         if strategy == 1:
-            return DarwinStrategy(dictionary, enc, enc_letters, single_let_freq)
+            return DarwinStrategy(dictionary, enc, enc_letters, unigram_freq, bigram_freq)
         if strategy == 2:
-            return LamarkStrategy(dictionary, enc, enc_letters, single_let_freq)
-        return RegularStrategy(dictionary, enc, enc_letters, single_let_freq)
+            return LamarkStrategy(dictionary, enc, enc_letters, unigram_freq, bigram_freq)
+        return RegularStrategy(dictionary, enc, enc_letters, unigram_freq, bigram_freq)
 
     @staticmethod
     def map_to_str(strategy: int) -> str:
@@ -33,10 +33,11 @@ class GeneticAlgorithmType(IntEnum):
 
 
 class BaseStrategy:
-    def __init__(self, dictionary: Set[str], enc: str, enc_letters: List[str], single_let_freq: Dict[str, float]) -> None:
+    def __init__(self, dictionary: Set[str], enc: str, enc_letters: List[str], unigram_freq: Dict[str, float], bigram_freq: Dict[str, float]) -> None:
         self.__enc = enc
         self.__dictionary = dictionary
-        self.__single_let_freq = single_let_freq
+        self.unigram_freq = unigram_freq
+        self.bigram_freq = bigram_freq
         self.__evolver: Evolver = Evolver(enc_letters)
         self.fitness_calls = 0
 
@@ -45,34 +46,41 @@ class BaseStrategy:
         dec_words = [d.split(' ') for d in dec]
         return dec, dec_words
 
-
-    def fitness(self, samples: List[Sample]) -> Tuple[int, List[float]]:
+    def fitness(self, samples: List[Sample]) -> List[float]:
         self.fitness_calls += len(samples)
         decs, dec_words = self.decode(samples)
-        fitness_scores = [check_words_in_dict_ratio(dec, self.__dictionary) for dec in dec_words]
-        # freq_measure = [letters_freq_ratio(dec, self.__single_let_freq, NMSE) for dec in decs]
+        words_in_dict_measure = [check_words_in_dict_ratio(dec, self.__dictionary) for dec in dec_words]
+        # word_correctness_measure = [word_correctness_by_len(dec, self.__dictionary) for dec in dec_words]
+        minus_diff_freq_measure = [letters_freq_ratio(dec, self.unigram_freq, self.bigram_freq, minus_freq_diff) for dec in decs]
+
+        # fitness_scores = words_in_dict_measure
+        # fitness_scores = [(a * 8 + b + c) / 10 for a, b, c in zip(words_in_dict_measure, word_correctness_measure, minus_diff_freq_measure)]
+        fitness_scores = [(a * 9 + b) / 10 for a, b in zip(words_in_dict_measure, minus_diff_freq_measure)]
+
         return fitness_scores
     
 
     def optimize(self, samples: List[Sample], fitness_scores: List[float]) -> List[Sample]:
         optimized: List[Sample] = list()
+        prev_fitness = 0
 
         for s, f in zip(samples, fitness_scores):
             new_fitness = 0
             new_sample = s
             temp: Sample = copy.deepcopy(s)
-            for _ in range(50):
-                mutation, c1, c2 = self.__evolver.mutate(temp.dec_map)
+            for _ in range(10):
+                mutation, swaps = self.__evolver.swap_mutation(temp.dec_map)
                 new_fitness = self.fitness([Sample(mutation)])[0]
 
                 if new_fitness == 1:
                     break
                 
-                temp.swap(c1, c2)
+                temp.swap(swaps)
             
             # Accept mutation only if it is better
-            if new_fitness >= f:
+            if new_fitness >= f and new_fitness > prev_fitness:
                 new_sample = temp
+                prev_fitness = new_fitness
             
             optimized.append(new_sample)
         
@@ -80,16 +88,16 @@ class BaseStrategy:
 
 
 class RegularStrategy(BaseStrategy):
-    def __init__(self, dictionary: Set[str], enc: str, enc_letters: List[str], single_let_freq: Dict[str, float]) -> None:
-        super().__init__(dictionary, enc, enc_letters, single_let_freq)
+    def __init__(self, dictionary: Set[str], enc: str, enc_letters: List[str], unigram_freq: Dict[str, float], bigram_freq: Dict[str, float]) -> None:
+        super().__init__(dictionary, enc, enc_letters, unigram_freq, bigram_freq)
 
     def activate(self, step_func: Callable[[List[Sample], List[float]], Tuple[List[Sample], List[float]]], samples: List[Sample], fitness_scores: List[float]) -> Tuple[List[Sample], List[float]]:
         return step_func(samples, fitness_scores)
 
 
 class DarwinStrategy(BaseStrategy):
-    def __init__(self, dictionary: Set[str], enc: str, enc_letters: List[str], single_let_freq: Dict[str, float]) -> None:
-        super().__init__(dictionary, enc, enc_letters, single_let_freq)
+    def __init__(self, dictionary: Set[str], enc: str, enc_letters: List[str], unigram_freq: Dict[str, float], bigram_freq: Dict[str, float]) -> None:
+        super().__init__(dictionary, enc, enc_letters, unigram_freq, bigram_freq)
 
     def activate(self, step_func: Callable[[List[Sample], List[float]], Tuple[List[Sample], List[float]]], samples: List[Sample], fitness_scores: List[float]) -> Tuple[List[Sample], List[float]]:
         optimized_samples = self.optimize(samples, fitness_scores)
@@ -99,8 +107,8 @@ class DarwinStrategy(BaseStrategy):
 
 
 class LamarkStrategy(BaseStrategy):
-    def __init__(self, dictionary: Set[str], enc: str, enc_letters: List[str], single_let_freq: Dict[str, float]) -> None:
-        super().__init__(dictionary, enc, enc_letters, single_let_freq)
+    def __init__(self, dictionary: Set[str], enc: str, enc_letters: List[str], unigram_freq: Dict[str, float], bigram_freq: Dict[str, float]) -> None:
+        super().__init__(dictionary, enc, enc_letters, unigram_freq, bigram_freq)
 
     def activate(self, step_func: Callable[[List[Sample], List[float]], Tuple[List[Sample], List[float]]], samples: List[Sample], fitness_scores: List[float]) -> Tuple[List[Sample], List[float]]:
         optimized_samples = self.optimize(samples, fitness_scores)
