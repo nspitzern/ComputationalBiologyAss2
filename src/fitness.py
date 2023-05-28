@@ -52,33 +52,49 @@ def get_let_freq(dec: str):
     return { k: v / counter.total() for k, v in counter.items() }
 
 
+def get_bigrams_freq(dec: str) -> Dict[str, float]:
+    freqs = dict()
+    length = len(dec)
+    dec = dec.replace(' ', '')
+    bigrams = list(zip(dec, dec[1:]))
+
+    c = Counter(bigrams)
+    for k, v in c.items():
+        freqs[k[0] + k[1]] = v / length
+    return dict(freqs)
+
 # def letters_freq_ratio(dec_letters_freq: Dict[str, float], corpus_letters_freq, measurement_func: Callable) -> float:
 #     freqs = [(dec_letters_freq[c], corpus_letters_freq[c]) for c in corpus_letters_freq.keys()]
 
 #     return measurement_func(freqs)
 
 
-def letters_freq_ratio(dec: str, corpus_letters_freq: Dict[str, float], measurement_func: Callable) -> float:
+def letters_freq_ratio(dec: str, corpus_unigrams_freq: Dict[str, float], corpus_bigrams_freq: Dict[str, float], measurement_func: Callable) -> float:
     dec_letters_freq = get_let_freq(dec)
-    freq1 = [dec_letters_freq.get(c, 0) for c in corpus_letters_freq.keys()]
-    freq2 = [corpus_letters_freq[c] for c in corpus_letters_freq.keys()]
+    freq1 = [dec_letters_freq.get(c, 0) for c in corpus_unigrams_freq.keys()]
+    freq2 = [corpus_unigrams_freq[c] for c in corpus_unigrams_freq.keys()]
+    m1 = measurement_func(freq1, freq2)
 
-    return measurement_func(freq1, freq2)
+    # dec_bigrams_freq = get_bigrams_freq(dec)
+    # freq1 = [dec_bigrams_freq.get(c, 0) for c in corpus_bigrams_freq.keys()]
+    # freq2 = [corpus_bigrams_freq[c] for c in corpus_bigrams_freq.keys()]
+    # m2 = measurement_func(freq1, freq2)
+
+    return m1 #+ m2
 
 
-def MSE(freqs: List[Tuple[float, float]], rooted: bool = False) -> float:
-    n_freqs = len(freqs)
+def MSE(freq1: List[float], freq2: List[float], rooted: bool = False) -> float:
+    n_freqs = len(freq2)
     res = 0
 
-    for dec_freq, corpus_freq in freqs:
+    for dec_freq, corpus_freq in zip(freq1, freq2):
         val = (dec_freq - corpus_freq) ** 2
+        res += val / n_freqs
 
-        if rooted:
-            val = val ** 0.5
+    if rooted:
+        res = res ** 0.5
+    return res
 
-        res += val
-
-    return res / n_freqs
 
 def NMSE(freq1: List[float], freq2: List[float]) -> float:
     n_freqs = len(freq1)
@@ -86,3 +102,12 @@ def NMSE(freq1: List[float], freq2: List[float]) -> float:
     res /= np.var(freq2)
 
     return res / n_freqs
+
+
+def abs_diff(freq1: List[float], freq2: List[float]) -> float:
+    return sum([abs(f1 - f2) for f1, f2 in zip(freq1, freq2)])
+
+
+def minus_freq_diff(freq1: List[float], freq2: List[float]) -> float:
+    length = len(freq2)
+    return sum([1 - abs(f1 - f2) for f1, f2 in zip(freq1, freq2)]) / length
