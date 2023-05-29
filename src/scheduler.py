@@ -13,8 +13,4 @@ class Scheduler:
         return self.__decay
 
     def calculate(self, step: int) -> float:
-        # percent = self.__init_val
-        # if history.last_n_best_change(20) < 0.05:
-        #     percent = min(percent * 3, 1)
-        # return percent
         return max(self.__init_val / (1 + self.__decay * step), self.__min_val)

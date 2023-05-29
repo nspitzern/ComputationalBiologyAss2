@@ -1,6 +1,6 @@
 import os
-from typing import List, Dict, Tuple
-from string import punctuation, whitespace
+from typing import List, Dict
+from string import whitespace
 
 
 def parse_dict(file_path: str) -> List[str]:
@@ -16,6 +16,7 @@ def parse_letters_freq(file_path: str) -> Dict[str, float]:
              for word in f.readlines() if word not in whitespace and word != '\t#REF!\n'}
 
     return d
+
 
 def parse_encoded(file_path: str) -> str:
     with open(file_path, 'r', encoding='utf-8') as f:

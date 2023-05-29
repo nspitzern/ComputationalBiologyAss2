@@ -1,5 +1,4 @@
-from typing import Dict, List, Tuple
-from random import sample, randint
+from typing import List
 from src.sample import Sample
 
 

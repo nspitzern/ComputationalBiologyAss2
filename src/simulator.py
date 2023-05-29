@@ -180,14 +180,12 @@ class Simulator:
         
         # Mutation
         mutation_prob = self.__scheduler.calculate(step)
-        mutation_amount = int(self.__num_samples * mutation_prob)
+        mutation_amount = int(len(samples) * mutation_prob)
 
         for i in Selector.choose_n_random(samples, mutation_amount):
             s = samples[i]
-            # mutation, c1, c2 = self.__evolver.scramble_mutation(s.dec_map)
             mutation, swaps = self.__evolver.swap_mutation(s.dec_map)
             if mutation not in self.__memory:
-                # s.swap(c1, c2)
                 s.swap(swaps)
                 self.__memory.add(mutation)
 
