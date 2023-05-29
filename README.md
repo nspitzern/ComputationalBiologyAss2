@@ -48,3 +48,9 @@ Install pyinstaller:
 
 Create executable:
 >pyinstaller -wF -p src main.py
+
+## Running the Executable
+To run the executable in CLI mode run:
+>main.exe [*required flags*] [*optional flags*]
+
+***Notice***: The flags here are the same as the flags to the python file.
