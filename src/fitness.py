@@ -14,12 +14,8 @@ def check_words_in_dict_ratio(dec: List[str], corpus: Set[str]) -> float:
 
     count = 0
     for w in dec:
-        for c in ['', 'ed', 'd', 'ies', 'ness', 's']:
-            if w.endswith(c):
-                temp = w.removesuffix(c)
-                if temp in corpus:
-                    count += 1
-                    break
+        if w in corpus:
+            count += 1
 
     return count / n_words_dec
 
