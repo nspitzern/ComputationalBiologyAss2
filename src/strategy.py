@@ -2,8 +2,9 @@ import copy
 from enum import IntEnum
 from string import punctuation
 from typing import Callable, Dict, List, Set, Tuple
+
 from src.evolver import Evolver
-from src.fitness import MSE, NMSE, abs_diff, minus_freq_diff, check_words_in_dict_ratio, letters_freq_ratio, word_correctness_by_len
+from src.fitness import minus_freq_diff, check_words_in_dict_ratio, letters_freq_ratio
 from src.decoder import Decoder
 from src.sample import Sample
 
@@ -11,14 +12,14 @@ from src.sample import Sample
 class GeneticAlgorithmType(IntEnum):
     REGULAR = 0
     DARWIN = 1
-    LAMARK = 2
+    LAMARCK = 2
 
     @staticmethod
     def get_strategy(strategy: int, dictionary: Set[str], enc: str, enc_letters: List[str], unigram_freq: Dict[str, float], bigram_freq: Dict[str, float]):
         if strategy == 1:
             return DarwinStrategy(dictionary, enc, enc_letters, unigram_freq, bigram_freq)
         if strategy == 2:
-            return LamarkStrategy(dictionary, enc, enc_letters, unigram_freq, bigram_freq)
+            return LamarckStrategy(dictionary, enc, enc_letters, unigram_freq, bigram_freq)
         return RegularStrategy(dictionary, enc, enc_letters, unigram_freq, bigram_freq)
 
     @staticmethod
@@ -26,7 +27,7 @@ class GeneticAlgorithmType(IntEnum):
         m = {
             GeneticAlgorithmType.REGULAR: 'REGULAR',
             GeneticAlgorithmType.DARWIN: 'DARWIN',
-            GeneticAlgorithmType.LAMARK: 'LAMARK',
+            GeneticAlgorithmType.LAMARCK: 'LAMARCK',
         }
 
         return m.get(strategy, '')
@@ -50,33 +51,25 @@ class BaseStrategy:
         self.fitness_calls += len(samples)
         decs, dec_words = self.decode(samples)
         words_in_dict_measure = [check_words_in_dict_ratio(dec, self.__dictionary) for dec in dec_words]
-        # word_correctness_measure = [word_correctness_by_len(dec, self.__dictionary) for dec in dec_words]
-        minus_diff_freq_measure = [letters_freq_ratio(dec, self.unigram_freq, self.bigram_freq, minus_freq_diff) for dec in decs]
+        minus_diff_unigrams_freq_measure = [letters_freq_ratio(dec, self.unigram_freq, minus_freq_diff) for dec in decs]
 
-        # fitness_scores = words_in_dict_measure
-        # fitness_scores = [(a * 8 + b + c) / 10 for a, b, c in zip(words_in_dict_measure, word_correctness_measure, minus_diff_freq_measure)]
-        fitness_scores = [(a * 9 + b) / 10 for a, b in zip(words_in_dict_measure, minus_diff_freq_measure)]
+        fitness_scores = [(a * 9 + b * 1) / 10 for
+                          a, b in zip(words_in_dict_measure, minus_diff_unigrams_freq_measure)]
 
         return fitness_scores
-    
 
     def optimize(self, samples: List[Sample], fitness_scores: List[float]) -> List[Sample]:
         optimized: List[Sample] = list()
         prev_fitness = 0
 
         for s, f in zip(samples, fitness_scores):
-            new_fitness = 0
             new_sample = s
             temp: Sample = copy.deepcopy(s)
             for _ in range(10):
                 mutation, swaps = self.__evolver.swap_mutation(temp.dec_map)
-                new_fitness = self.fitness([Sample(mutation)])[0]
-
-                if new_fitness == 1:
-                    break
-                
                 temp.swap(swaps)
-            
+
+            new_fitness = self.fitness([Sample(mutation)])[0]
             # Accept mutation only if it is better
             if new_fitness >= f and new_fitness > prev_fitness:
                 new_sample = temp
@@ -106,7 +99,7 @@ class DarwinStrategy(BaseStrategy):
         return samples, fitness_scores
 
 
-class LamarkStrategy(BaseStrategy):
+class LamarckStrategy(BaseStrategy):
     def __init__(self, dictionary: Set[str], enc: str, enc_letters: List[str], unigram_freq: Dict[str, float], bigram_freq: Dict[str, float]) -> None:
         super().__init__(dictionary, enc, enc_letters, unigram_freq, bigram_freq)
 
