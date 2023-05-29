@@ -143,7 +143,17 @@ class Simulator:
 
         return new_samples
 
-    def __save(self, samples: List[Sample], dec: List[str], fitness_scores: List[float], generations: int, run_num: int = 0) -> None:
+    def __save(self, samples: List[Sample], fitness_scores: List[float]):
+        i = np.argmax(fitness_scores)
+        best: Sample = samples[i]
+
+        with open('perm.txt', '+wt', encoding='utf-8') as f:
+            f.write(best.get_dec_map_as_table(self.__letters))
+
+        with open('plain.txt', '+wt', encoding='utf-8') as f:
+            f.writelines(Decoder.decode_words(self.enc, best.dec_map_int))
+
+    def __save_test(self, samples: List[Sample], dec: List[str], fitness_scores: List[float], generations: int, run_num: int = 0) -> None:
         i = np.argmax(fitness_scores)
         best = samples[i]
 
@@ -253,4 +263,5 @@ class Simulator:
         print(f'Best Words Fitness: {100 * max([check_words_in_dict_ratio(dec, self.dictionary) for dec in dec_words])}%')
 
         self.__plot_current(best_history, i + 1)
-        self.__save(best_samples, dec, best_fitness, len(best_history), run_num=i)
+        # self.__save_test(best_samples, dec, best_fitness, len(best_history), run_num=i)
+        self.__save(best_samples, best_fitness)
