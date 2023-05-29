@@ -16,6 +16,8 @@ from src.selector import Selector
 from src.scheduler import Scheduler
 from src.strategy import GeneticAlgorithmType
 
+plt.figure(figsize=(8, 6), dpi=70)
+
 
 OUTPUT_DIR_PATH = 'output'
 
@@ -104,12 +106,14 @@ class Simulator:
 
         return max(fitness_scores) < self.__fitness_goal
 
-    def __plot_current(self, history: SimulationHistory):
-        plt.plot(history.worst)
-        plt.plot(history.average)
-        plt.plot(history.best)
+    def __plot_current(self, history: SimulationHistory, iteration: int):
+        plt.title(f'Method: {GeneticAlgorithmType.map_to_str(self.algo_type)}, Iteration: {iteration}#, Population Size: {self.__num_samples},\n Fitness Calls: {self.__strategy.fitness_calls}, Mutation Ratio: {self.__args.mutation.mutation_percentage * 100}%')
+        plt.plot(history.worst, label='Worst Fitness')
+        plt.plot(history.average, label='Avg Fitness')
+        plt.plot(history.best, label='Best Fitness')
         plt.xlabel('Generation number')
         plt.ylabel('Fitness Score %')
+        plt.legend(loc='upper right', bbox_to_anchor=(1, 1))
         plt.draw()
         plt.pause(0.01)
 
@@ -197,7 +201,7 @@ class Simulator:
 
         return samples, fitness_scores
 
-    def run(self, fitness_goals: Dict[int, float] = None):
+    def run(self, iteration: int, fitness_goals: Dict[int, float] = None):
         history: SimulationHistory = SimulationHistory()
         step = 0
 
@@ -210,14 +214,16 @@ class Simulator:
         fitness_scores = self.__strategy.fitness(samples)
         
         self.__add_current_iteration_data(fitness_scores, history)
-        self.__plot_current(history)
+        self.__plot_current(history, iteration)
+        plt.cla()
 
         while self.__should_run(step, history, fitness_scores, fitness_goals):
             step_func = lambda s, f: self.__step(step, s, f)
             samples, fitness_scores = self.__strategy.activate(step_func, samples, fitness_scores)
             
             self.__add_current_iteration_data(fitness_scores, history)
-            self.__plot_current(history)
+            self.__plot_current(history, iteration)
+            plt.cla()
 
             print(f'Best: {max(fitness_scores) * 100}%, Worst: {min(fitness_scores) * 100}%, Mean: {statistics.mean(fitness_scores) * 100}%')
             print(f'fitness calls: {self.__strategy.fitness_calls}')
@@ -225,7 +231,6 @@ class Simulator:
 
             step += 1
 
-        plt.cla()
         return fitness_scores, samples, history
 
     def run_multiple(self, num_runs, **kwargs):
@@ -234,7 +239,7 @@ class Simulator:
         best_history = SimulationHistory()
 
         for i in range(num_runs):
-            fitnesses, samples, history = self.run(**kwargs)
+            fitnesses, samples, history = self.run(i + 1, **kwargs)
 
             if max(fitnesses) > max(best_fitness):
                 best_fitness = fitnesses
@@ -247,5 +252,5 @@ class Simulator:
         dec, dec_words = self.__strategy.decode(best_samples)
         print(f'Best Words Fitness: {100 * max([check_words_in_dict_ratio(dec, self.dictionary) for dec in dec_words])}%')
 
-        self.__plot_current(best_history)
+        self.__plot_current(best_history, i + 1)
         self.__save(best_samples, dec, best_fitness, len(best_history), run_num=i)
