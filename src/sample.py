@@ -21,6 +21,13 @@ class Sample:
     def dec_map_int(self):
         return self.__dec_map_int
 
+    def get_dec_map_as_table(self, letters):
+        s = ''
+        for c in letters:
+            s += f'{c} {self.__dec_map.get(c)}\n'
+
+        return s
+
     @property
     def decode_letters(self) -> List[str]:
         return list(self.__dec_map.values())
