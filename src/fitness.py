@@ -63,24 +63,12 @@ def get_bigrams_freq(dec: str) -> Dict[str, float]:
         freqs[k[0] + k[1]] = v / length
     return dict(freqs)
 
-# def letters_freq_ratio(dec_letters_freq: Dict[str, float], corpus_letters_freq, measurement_func: Callable) -> float:
-#     freqs = [(dec_letters_freq[c], corpus_letters_freq[c]) for c in corpus_letters_freq.keys()]
 
-#     return measurement_func(freqs)
-
-
-def letters_freq_ratio(dec: str, corpus_unigrams_freq: Dict[str, float], corpus_bigrams_freq: Dict[str, float], measurement_func: Callable) -> float:
+def letters_freq_ratio(dec: str, corpus_letters_freq: Dict[str, float], measurement_func: Callable) -> float:
     dec_letters_freq = get_let_freq(dec)
-    freq1 = [dec_letters_freq.get(c, 0) for c in corpus_unigrams_freq.keys()]
-    freq2 = [corpus_unigrams_freq[c] for c in corpus_unigrams_freq.keys()]
-    m1 = measurement_func(freq1, freq2)
-
-    # dec_bigrams_freq = get_bigrams_freq(dec)
-    # freq1 = [dec_bigrams_freq.get(c, 0) for c in corpus_bigrams_freq.keys()]
-    # freq2 = [corpus_bigrams_freq[c] for c in corpus_bigrams_freq.keys()]
-    # m2 = measurement_func(freq1, freq2)
-
-    return m1 #+ m2
+    freq1 = [dec_letters_freq.get(c, 0) for c in corpus_letters_freq.keys()]
+    freq2 = [corpus_letters_freq[c] for c in corpus_letters_freq.keys()]
+    return measurement_func(freq1, freq2)
 
 
 def MSE(freq1: List[float], freq2: List[float], rooted: bool = False) -> float:
